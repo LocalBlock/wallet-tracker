@@ -8,7 +8,6 @@ import {
   FormLabel,
   IconButton,
   Input,
-  MenuItem,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -31,14 +30,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 interface GroupModalProps {
   action: "Edit" | "Add";
   children?: string;
-  onCloseMenu: () => void;
   groupNameEdit: string;
 }
 
 export default function GroupModal({
   children,
   action,
-  onCloseMenu,
   groupNameEdit,
 }: GroupModalProps) {
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
@@ -69,7 +66,7 @@ export default function GroupModal({
   const modalTrigger = (action: "Edit" | "Add") => {
     switch (action) {
       case "Add":
-        return <MenuItem onClick={onOpen}>{children}</MenuItem>;
+        return <Button onClick={onOpen}>{children}</Button>;
 
       case "Edit":
         return (
@@ -80,7 +77,7 @@ export default function GroupModal({
               size={"sm"}
               icon={<FontAwesomeIcon icon={faEdit} />}
               onClick={() => {
-                onCloseMenu(); // Close Menu
+                //onCloseMenu(); // Close Menu
                 onOpen();
               }}
             />

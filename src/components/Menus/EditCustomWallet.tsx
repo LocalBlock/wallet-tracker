@@ -37,12 +37,10 @@ import { getAllWallet } from "../../functions/localstorage";
 
 interface EditCustomWalletProps {
   walletId: string;
-  onCloseMenu: () => void;
 }
 
 export default function EditCustomWallet({
   walletId,
-  onCloseMenu,
 }: EditCustomWalletProps) {
   const { allWallet,setAllWallet } = useContext(AllWalletContext);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -90,7 +88,7 @@ export default function EditCustomWallet({
           size={"sm"}
           icon={<FontAwesomeIcon icon={faEdit} />}
           onClick={() => {
-            onCloseMenu(); // Close Menu
+            //onCloseMenu(); // Close Menu
             onOpen();
           }}
         />

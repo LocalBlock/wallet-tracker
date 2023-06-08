@@ -15,7 +15,6 @@ import {
   Input,
   useToast,
   useDisclosure,
-  MenuItem,
   RadioGroup,
   Stack,
   Radio,
@@ -170,7 +169,7 @@ export default function WalletModal({ children, allWallet }: Props) {
 
   //console.log("Render: AddressModal");
   return (
-    <MenuItem onClick={onOpen}>
+    <Button onClick={onOpen}>
       {children}
       <Modal
         isOpen={isOpen}
@@ -256,6 +255,6 @@ export default function WalletModal({ children, allWallet }: Props) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </MenuItem>
+    </Button>
   );
 }

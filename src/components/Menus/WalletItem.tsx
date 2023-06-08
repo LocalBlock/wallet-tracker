@@ -1,18 +1,17 @@
 import React from "react";
-import { MenuItem, Box, Flex, IconButton, Tooltip } from "@chakra-ui/react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy } from "@fortawesome/free-solid-svg-icons";
-import ModalRemove from "./ModalRemove";
 import { AddressWallet, CustomWallet, Web3Wallet } from "../../classes/Wallet";
+import { Flex, IconButton, Tooltip } from "@chakra-ui/react";
+import { faCopy } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import EditCustomWallet from "./EditCustomWallet";
+import ModalRemove from "./ModalRemove";
 
 interface Props {
   wallet: AddressWallet | CustomWallet | Web3Wallet;
-  /** Close menu function */
-  onCloseMenu: () => void;
+
 }
 
-export default function WalletMenuItem({ wallet, onCloseMenu }: Props) {
+export default function WalletItem({ wallet }: Props) {
   let actionButtons: JSX.Element;
   switch (wallet.type) {
     case "AddressWallet":
@@ -33,7 +32,7 @@ export default function WalletMenuItem({ wallet, onCloseMenu }: Props) {
             </Tooltip>
             <ModalRemove
               walletId={walletTyped.id}
-              onCloseMenu={onCloseMenu}
+              //onCloseMenu={onCloseMenu}
               alertHeader="Remove Address"
               alertBody={
                 "Do you want to remove this wallet : " +
@@ -50,11 +49,13 @@ export default function WalletMenuItem({ wallet, onCloseMenu }: Props) {
         const walletTyped = wallet as CustomWallet;
         actionButtons = (
           <>
-            <EditCustomWallet walletId={wallet.id} onCloseMenu={onCloseMenu} />
+            <EditCustomWallet
+              walletId={wallet.id}
+              //onCloseMenu={onCloseMenu}
+            />
 
             <ModalRemove
               walletId={walletTyped.id}
-              onCloseMenu={onCloseMenu}
               alertHeader="Remove Address"
               alertBody={
                 "Do you want to remove this wallet : " +
@@ -83,7 +84,7 @@ export default function WalletMenuItem({ wallet, onCloseMenu }: Props) {
 
             <ModalRemove
               walletId={walletTyped.id}
-              onCloseMenu={onCloseMenu}
+              //onCloseMenu={onCloseMenu}
               alertHeader="Remove Address"
               alertBody={
                 "Do you want to remove this wallet : " +
@@ -97,13 +98,13 @@ export default function WalletMenuItem({ wallet, onCloseMenu }: Props) {
       break;
   }
   return (
-    <MenuItem
-      as={Box}
+    <Flex
       justifyContent={"space-between"}
-      closeOnSelect={false} //Desactive close behavior
+      gap={5}
+      alignItems={"center"}
     >
       {wallet.displayName}
       <Flex gap={1}>{actionButtons}</Flex>
-    </MenuItem>
+    </Flex>
   );
 }

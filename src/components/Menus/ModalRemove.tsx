@@ -24,14 +24,12 @@ import { UserSettingsContext } from "../../contexts/UserSettingsContext";
 import { AllWalletContext } from "../../contexts/AllWalletContext";
 
 interface ModalRemoveProps {
-  onCloseMenu: () => void;
   alertHeader: string;
   alertBody: string;
   groupName?: string;
   walletId?: string;
 }
 export default function ModalRemove({
-  onCloseMenu,
   alertHeader,
   alertBody,
   groupName = "",
@@ -96,7 +94,6 @@ export default function ModalRemove({
           size={"sm"}
           icon={<FontAwesomeIcon icon={faTrash} />}
           onClick={() => {
-            onCloseMenu(); // Close Menu
             onOpen(); // Open Modal
           }}
         />
