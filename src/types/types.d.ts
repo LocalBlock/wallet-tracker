@@ -216,4 +216,6 @@ export interface appSettingsType {
   fetchDelayCoinList:number;
   /** Interval of fetching function */
   intervalCheck: number;
+  /** Default userSettings, used when there is no usersetting in localstorage */
+  defaultUserSettings: userSettings;
 }

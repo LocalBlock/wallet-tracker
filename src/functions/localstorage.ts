@@ -5,7 +5,7 @@ import {
   Wallet,
   Web3Wallet,
 } from "../classes/Wallet";
-
+import { appSettings } from "../settings/appSettings";
 
 export function updateUserSettings(
   setting: string,
@@ -34,17 +34,13 @@ export function getUserSettings() {
   const ls = localStorage.getItem("userSettings");
   if (ls) return JSON.parse(ls) as userSettings;
   else {
-    const defaultUserSettings: userSettings = {
-      currency: "eur",
-      groups: [],
-      selectedChain: ["ethereum"],
-      selectedWallet: { type: "wallet", index: 0 },
-    };
-    localStorage.setItem("userSettings", JSON.stringify(defaultUserSettings));
-    return defaultUserSettings;
+    localStorage.setItem(
+      "userSettings",
+      JSON.stringify(appSettings.defaultUserSettings)
+    );
+    return appSettings.defaultUserSettings;
   }
 }
-
 
 /**
  * Get all Wallet from localstorage
@@ -78,11 +74,11 @@ export function getAllWallet() {
   return allWallet;
 }
 
-export function getCoinList(){
+export function getCoinList() {
   const ls = localStorage.getItem("coinList");
-  if (ls){
-    const data=JSON.parse(ls) as {data:fetchCoinList[],lastFetch:number}
-    return data
+  if (ls) {
+    const data = JSON.parse(ls) as { data: fetchCoinList[]; lastFetch: number };
+    return data;
   }
 }
 

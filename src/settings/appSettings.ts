@@ -89,13 +89,19 @@ export const appSettings: appSettingsType = {
         },
       },
     },
-    beefy:{
-      image:"./beefy.svg"
-    }
+    beefy: {
+      image: "./beefy.svg",
+    },
   },
   fetchDelayRequest: 1000,
   intervalCheck: toMilliseconds(0, 1),
-  fetchDelayCoinList:toMilliseconds(240, 0),
+  fetchDelayCoinList: toMilliseconds(240, 0),
   fetchDelayBalance: toMilliseconds(1, 0),
   fetchDelayPrices: toMilliseconds(0, 10),
+  defaultUserSettings: {
+    currency: "usd",
+    groups: [],
+    selectedChain: ["ethereum", "polygon-pos"],
+    selectedWallet: { type: "wallet", index: 0 },
+  },
 };
