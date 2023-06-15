@@ -17,7 +17,6 @@ import React, { useContext } from "react";
 import {
   getAllWallet,
   getUserSettings,
-  removeWalletLocalstorage,
   updateUserSettings,
 } from "../../functions/localstorage";
 import { UserSettingsContext } from "../../contexts/UserSettingsContext";
@@ -39,7 +38,7 @@ export default function ModalRemove({
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
-  const { setAllWallet } = useContext(AllWalletContext);
+  const {allWallet, setAllWallet } = useContext(AllWalletContext);
 
   const handleRemove = () => {
     const lsGroups = userSettings.groups;
@@ -77,7 +76,7 @@ export default function ModalRemove({
           updateUserSettings("selectedWallet", { type: "wallet", index: 0 }); //Permière addresse par defaut
         }
       }
-      removeWalletLocalstorage(walletId); // Remove wallet on local storage
+      allWallet.find(wallet=>wallet.id===walletId)?.removeWallet() // Remove wallet on local storage
       updateUserSettings("groups", lsGroups); // Update userSettings on  localstorage
       setUserSettings(getUserSettings()); // Set state userSettings with new data from localstorage
       setAllWallet(getAllWallet()); // Set state allAddress with new data from localstorage

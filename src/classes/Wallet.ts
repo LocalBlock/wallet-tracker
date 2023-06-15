@@ -56,6 +56,14 @@ export abstract class Wallet {
     data.push(this);
     localStorage.setItem("Address", JSON.stringify(data));
   }
+  removeWallet(){
+    const ls = localStorage.getItem("Address");
+    if (ls) {
+      const data = JSON.parse(ls) as Wallet[];
+      const newData = data.filter((element) => element.id != this.id);
+      localStorage.setItem("Address", JSON.stringify(newData));
+    }
+  }
 }
 
 export class AddressWallet extends Wallet {

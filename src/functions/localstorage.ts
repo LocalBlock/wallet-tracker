@@ -81,13 +81,3 @@ export function getCoinList() {
     return data;
   }
 }
-
-export function removeWalletLocalstorage(walletId: string) {
-  const ls = localStorage.getItem("Address");
-  //const allWallet: (AddressWallet | CustomWallet | Web3Wallet)[] = [];
-  if (ls) {
-    const data = JSON.parse(ls) as Wallet[];
-    const newData = data.filter((element) => element.id != walletId);
-    localStorage.setItem("Address", JSON.stringify(newData));
-  }
-}
