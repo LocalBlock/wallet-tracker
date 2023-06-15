@@ -1,10 +1,7 @@
 import { getAllTokenBalance, getNativeBalance } from "../functions/Alchemy";
 import { fetchAave } from "../functions/aave";
 import { fetchBeefyData } from "../functions/beefy";
-import {
-  getCoinMarket,
-  getCoinPrices,
-} from "../functions/coingecko";
+import { getCoinMarket, getCoinPrices } from "../functions/coingecko";
 import { getCoinID } from "../functions/utils";
 
 import { appSettings } from "../settings/appSettings";
@@ -56,7 +53,7 @@ export abstract class Wallet {
     data.push(this);
     localStorage.setItem("Address", JSON.stringify(data));
   }
-  removeWallet(){
+  removeWallet() {
     const ls = localStorage.getItem("Address");
     if (ls) {
       const data = JSON.parse(ls) as Wallet[];
@@ -191,7 +188,7 @@ export class AddressWallet extends Wallet {
     this.tokens = updatedTokens;
 
     //Add CoinId
-    this.tokens.forEach( (token) => {
+    this.tokens.forEach((token) => {
       if (!token.id && token.contractAddress) {
         token.id = getCoinID(token.chain, token.contractAddress);
       }
@@ -465,8 +462,9 @@ export class CustomWallet extends Wallet {
   }
   async fetchData(forceUpdate = false) {
     if (
-      forceUpdate === true ||
-      Date.now() - this.lastFetchPrices > appSettings.fetchDelayPrices
+      (forceUpdate === true ||
+        Date.now() - this.lastFetchPrices > appSettings.fetchDelayPrices) &&
+      this.coins.length != 0
     ) {
       try {
         console.log(`[${this.displayName}] Start fetch prices...`);

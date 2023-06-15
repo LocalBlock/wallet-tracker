@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Container, VStack } from "@chakra-ui/react";
+import { Alert, AlertIcon, Container, VStack } from "@chakra-ui/react";
 import CardBalance from "../components/CardBalance";
 import ChainSelector from "../components/ChainSelector";
 import AddressSelector from "../components/WalletSelector";
@@ -14,6 +14,15 @@ import { AddressWallet, CustomWallet, Web3Wallet } from "../classes/Wallet";
 export default function Home() {
   const { allWallet } = useContext(AllWalletContext);
   const { userSettings } = useContext(UserSettingsContext);
+
+  if (allWallet.length === 0) {
+    return (
+      <Alert status="warning">
+        <AlertIcon />
+        Add a wallet to start tracking your magic money 🚀
+      </Alert>
+    );
+  }
 
   // Determine active address
   const allActiveWallet: (AddressWallet | CustomWallet | Web3Wallet)[] = [];
@@ -32,9 +41,6 @@ export default function Home() {
       break;
   }
 
-  if (allActiveWallet.length === 0) {
-    return null;
-  }
   return (
     <Container maxWidth={"container.md"}>
       <ChartBalance

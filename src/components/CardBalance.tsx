@@ -9,6 +9,8 @@ import {
   SimpleGrid,
   Heading,
   Tag,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
 import React from "react";
 
@@ -29,7 +31,7 @@ import { Token } from "../classes/Token";
 import { appSettings } from "../settings/appSettings";
 
 interface Props {
-  allActiveWallet: (AddressWallet|CustomWallet|Web3Wallet)[];
+  allActiveWallet: (AddressWallet | CustomWallet | Web3Wallet)[];
   selectedChain: string[];
   selectedCurrency: string;
 }
@@ -39,8 +41,6 @@ export default function CardBalance({
   selectedChain,
   selectedCurrency,
 }: Props) {
-
-
   const allActiveWalletFiltered = allActiveWallet.filter(
     (wallet) => wallet.type === ("AddressWallet" || "Web3Wallet")
   ) as (AddressWallet | Web3Wallet)[];
@@ -51,7 +51,6 @@ export default function CardBalance({
   //Merge tokens from all active addresses
   let allActiveTokens = mergeTokensWallet(allActiveWalletFiltered);
 
-
   //Filter by chain
   allActiveTokens = allActiveTokens.filter((token) =>
     selectedChain.some((element) => element === token.chain)
@@ -60,14 +59,14 @@ export default function CardBalance({
   // Merge same token on all selected chain
   allActiveTokens = mergeTokensChain(allActiveTokens);
 
-
-  
   // All coin merge from CustomWallet
   const allActiveCoins = mergeCoinsWallet(allActiveCustomWallet);
-
-
-  const allActiveTokensCoins = mergeTokensAndCoins(allActiveTokens,allActiveCoins);
-// Sort Token and coins Descent
+  const allActiveTokensCoins = mergeTokensAndCoins(
+    allActiveTokens,
+    allActiveCoins
+  );
+  
+  // Sort Token and coins Descent
   allActiveTokensCoins.sort(
     (a, b) =>
       (b.current_price ?? 0) * Number(b.balance) -
@@ -96,58 +95,69 @@ export default function CardBalance({
           align={"stretch"}
           divider={<StackDivider borderColor="gray.200" />}
         >
-          {allActiveTokensCoins.map((token, index) => (
-            <SimpleGrid
-              key={index}
-              columns={3}
-              templateColumns={"50px 1fr auto"}
-              spacingX={5}
-            >
-              <Box alignSelf={"center"}>
-                <Image loading="lazy" src={token.image} alt={token.name} />
-              </Box>
-              <Box>
-                <Box>
-                  <b>{token.name} </b>
-                  {token instanceof Token &&
-                  <Tag
-                    variant={token.chain.includes(",") ? "subtle" : token.chain}
-                  >
-                    {appSettings.chains.find(
-                      (chain) => chain.id === token.chain
-                    )?.name ?? "MultiChains"}
-                  </Tag>}
+          {allActiveTokensCoins.length > 0 ? (
+            allActiveTokensCoins.map((token, index) => (
+              <SimpleGrid
+                key={index}
+                columns={3}
+                templateColumns={"50px 1fr auto"}
+                spacingX={5}
+              >
+                <Box alignSelf={"center"}>
+                  <Image loading="lazy" src={token.image} alt={token.name} />
                 </Box>
                 <Box>
-                  {formatBalanceToken(
-                    Number(token.balance),
-                    token.symbol?.toUpperCase() ?? ""
-                  )}
+                  <Box>
+                    <b>{token.name} </b>
+                    {token instanceof Token && (
+                      <Tag
+                        variant={
+                          token.chain.includes(",") ? "subtle" : token.chain
+                        }
+                      >
+                        {appSettings.chains.find(
+                          (chain) => chain.id === token.chain
+                        )?.name ?? "MultiChains"}
+                      </Tag>
+                    )}
+                  </Box>
+                  <Box>
+                    {formatBalanceToken(
+                      Number(token.balance),
+                      token.symbol?.toUpperCase() ?? ""
+                    )}
+                  </Box>
                 </Box>
-              </Box>
-              <Box textAlign={"right"}>
-                <Box>
-                  {formatBalanceCurrency(
-                    token.getBalanceCurrency(selectedCurrency),
-                    selectedCurrency
-                  )}
-                </Box>
+                <Box textAlign={"right"}>
+                  <Box>
+                    {formatBalanceCurrency(
+                      token.getBalanceCurrency(selectedCurrency),
+                      selectedCurrency
+                    )}
+                  </Box>
 
-                <Box
-                  color={
-                    token.prices[currency24hChangePropName] >= 0
-                      ? "green"
-                      : "red"
-                  }
-                >
-                  {formatBalanceChange(
-                    token.prices[currency24hChangePropName] ?? 0,
-                    token.getBalanceCurrency(selectedCurrency),selectedCurrency
-                  )}
+                  <Box
+                    color={
+                      token.prices[currency24hChangePropName] >= 0
+                        ? "green"
+                        : "red"
+                    }
+                  >
+                    {formatBalanceChange(
+                      token.prices[currency24hChangePropName] ?? 0,
+                      token.getBalanceCurrency(selectedCurrency),
+                      selectedCurrency
+                    )}
+                  </Box>
                 </Box>
-              </Box>
-            </SimpleGrid>
-          ))}
+              </SimpleGrid>
+            ))
+          ) : (
+            <Alert status="info">
+              <AlertIcon />
+              No coins to track
+            </Alert>
+          )}
         </VStack>
       </CardBody>
     </Card>
