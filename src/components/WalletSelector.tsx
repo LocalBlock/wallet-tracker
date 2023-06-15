@@ -6,7 +6,7 @@ import {
   MenuGroup,
   MenuItem,
 } from "@chakra-ui/react";
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { AllWalletContext } from "../contexts/AllWalletContext";
 import { UserSettingsContext } from "../contexts/UserSettingsContext";
 import { getUserSettings, updateUserSettings } from "../functions/localstorage";
@@ -14,30 +14,25 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
 export default function WalletSelector() {
-  const [selectedWallet, setSelectedWallet] = useState(
-    getUserSettings().selectedWallet
-  );
+
   const { allWallet } = useContext(AllWalletContext);
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
 
   const handleClick = (
     selectedWallet: (typeof userSettings)["selectedWallet"]
   ) => {
-    //const selectedAddress = { label, selectedAddress: items };
     updateUserSettings("selectedWallet", selectedWallet);
-
-    setSelectedWallet(selectedWallet);
     setUserSettings(getUserSettings());
   };
 
   let label = "";
-  switch (selectedWallet.type) {
+  switch (userSettings.selectedWallet.type) {
     case "wallet":
-      label = allWallet[selectedWallet.index].displayName;
+      label = allWallet[userSettings.selectedWallet.index].displayName;
       break;
 
     case "group":
-      label = userSettings.groups[selectedWallet.index].name;
+      label = userSettings.groups[userSettings.selectedWallet.index].name;
       break;
   }
 

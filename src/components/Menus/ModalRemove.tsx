@@ -38,7 +38,7 @@ export default function ModalRemove({
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
-  const {allWallet, setAllWallet } = useContext(AllWalletContext);
+  const { allWallet, setAllWallet } = useContext(AllWalletContext);
 
   const handleRemove = () => {
     const lsGroups = userSettings.groups;
@@ -58,14 +58,14 @@ export default function ModalRemove({
       setUserSettings(getUserSettings());
       onClose(); //Close modal
     }
-    //remove Address
+    //remove wallet
     if (walletId) {
-      //First, remove Address on groups
+      //First, remove wallet on groups
       lsGroups.map((group) => {
         const index = group.wallets.indexOf(walletId);
         if (index != -1) group.wallets.splice(index, 1); // 2nd parameter means remove one item only
       });
-      // Remove group if there is no more address
+      // Remove group if there is no more wallet
       const index = lsGroups.findIndex((group) => group.wallets.length === 0);
       if (index != -1) {
         lsGroups.splice(index, 1);
@@ -73,10 +73,28 @@ export default function ModalRemove({
           userSettings.selectedWallet.type === "group" &&
           userSettings.selectedWallet.index === index
         ) {
-          updateUserSettings("selectedWallet", { type: "wallet", index: 0 }); //Permière addresse par defaut
+          updateUserSettings("selectedWallet", { type: "wallet", index: 0 }); // Switch to first wallet if selected group is remove
         }
       }
-      allWallet.find(wallet=>wallet.id===walletId)?.removeWallet() // Remove wallet on local storage
+      const removeWalletIndex = allWallet.findIndex(
+        (wallet) => wallet.id === walletId
+      );
+
+      // if selected address is remove
+      if (
+        userSettings.selectedWallet.type === "wallet" &&
+        userSettings.selectedWallet.index === removeWalletIndex
+      ) {
+        // back to first wallet
+        updateUserSettings("selectedWallet", { type: "wallet", index: 0 });
+      } else if(userSettings.selectedWallet.index>removeWalletIndex) {
+        // decrecment selected index if necessary 
+        updateUserSettings("selectedWallet", {
+          type: "wallet",
+          index: --userSettings.selectedWallet.index,
+        });
+      }
+      allWallet[removeWalletIndex].removeWallet(); // Remove wallet on local storage
       updateUserSettings("groups", lsGroups); // Update userSettings on  localstorage
       setUserSettings(getUserSettings()); // Set state userSettings with new data from localstorage
       setAllWallet(getAllWallet()); // Set state allAddress with new data from localstorage
