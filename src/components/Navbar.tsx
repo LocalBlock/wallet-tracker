@@ -12,7 +12,6 @@ import {
   PopoverTrigger,
   Portal,
   Stack,
-
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
@@ -34,17 +33,12 @@ import WalletModal from "./Menus/WalletModal";
 import GroupModal from "./Menus/GroupModal";
 import SettingsMenu from "./Menus/SettingsMenu";
 
-export default function NavbarV2() {
+export default function Navbar() {
   const { isOpen, onToggle } = useDisclosure();
   return (
     <Box as={"header"} position={"sticky"} zIndex={50} top={0}>
-      <Flex
-        //w={"100%"}
-        justifyContent={"space-between"}
-
-        //height={'100px'}
-      >
-        <Flex alignItems={"center"}>
+      <Flex justifyContent={"space-between"} alignItems={"center"} padding={1}>
+        <Flex alignItems={"center"} gap={4}>
           <Logo />
           <DesktopNav />
         </Flex>
@@ -59,7 +53,6 @@ export default function NavbarV2() {
           />
         </Flex>
       </Flex>
-
       <Collapse in={isOpen} animateOpacity>
         <MobileNav />
       </Collapse>
@@ -163,13 +156,21 @@ const DesktopNav = () => {
         </PopoverTrigger>
         <Portal>
           <PopoverContent width={"auto"}>
-            <PopoverHeader><Flex alignItems={"center"}><FontAwesomeIcon icon={faWallet} pull="left" />Wallets ({allWallet.length}) </Flex></PopoverHeader>
+            <PopoverHeader>
+              <Flex alignItems={"center"}>
+                <FontAwesomeIcon icon={faWallet} pull="left" />
+                Wallets ({allWallet.length}){" "}
+              </Flex>
+            </PopoverHeader>
             <PopoverBody>
               <Stack>
-                {allWallet.length != 0 ?
+                {allWallet.length != 0 ? (
                   allWallet.map((wallet) => (
                     <WalletItem key={wallet.id} wallet={wallet} />
-                  )):<Text>No wallets 😩</Text>}
+                  ))
+                ) : (
+                  <Text>No wallets 😩</Text>
+                )}
               </Stack>
             </PopoverBody>
             <PopoverFooter textAlign={"center"}>
@@ -184,13 +185,21 @@ const DesktopNav = () => {
         </PopoverTrigger>
         <Portal>
           <PopoverContent width={"auto"}>
-            <PopoverHeader><Flex alignItems={"center"}><FontAwesomeIcon icon={faObjectGroup} pull="left" />Groups ({userSettings.groups.length})</Flex></PopoverHeader>
+            <PopoverHeader>
+              <Flex alignItems={"center"}>
+                <FontAwesomeIcon icon={faObjectGroup} pull="left" />
+                Groups ({userSettings.groups.length})
+              </Flex>
+            </PopoverHeader>
             <PopoverBody>
               <Stack>
-                {userSettings.groups.length != 0 ?
+                {userSettings.groups.length != 0 ? (
                   userSettings.groups.map((group) => (
                     <GroupItem key={group.name} groupName={group.name} />
-                  )):<Text>no group 😩</Text>}
+                  ))
+                ) : (
+                  <Text>no group 😩</Text>
+                )}
               </Stack>
             </PopoverBody>
             <PopoverFooter textAlign={"center"}>
