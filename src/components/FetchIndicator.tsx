@@ -37,14 +37,14 @@ export default function FetchIndicator() {
           try {
             isFetched = await wallet.fetchData();
           } catch (error) {
+            console.error(error);
             isError = true;
             errorMessagesTemp.push(
-              "Fetch error on : " + wallet.displayName + " Cause : " + error
+              "Fetch error on " + wallet.displayName + ", Cause : " + (error as Error).message
             );
           }
         }
         if (isError) {
-          console.log("error");
           setFetchStatus("fail");
           setErrorMessages(errorMessagesTemp);
         } else {

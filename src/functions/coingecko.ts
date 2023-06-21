@@ -49,5 +49,5 @@ async function fetchAPI(url: string) {
   if (r.ok) {
     return r.json();
   }
-  throw new Error("Coingecko response not OK");
+  throw new Error("CoinGecko : " + r.status + " " + r.statusText);
 }

@@ -144,8 +144,7 @@ export class AddressWallet extends Wallet {
         );
         return true;
       } catch (error) {
-        console.log(error);
-        return false;
+        throw new Error((error as Error).message)
       }
     } else {
       console.log(`[${this.displayName}] No need to fetch`);
@@ -475,8 +474,7 @@ export class CustomWallet extends Wallet {
         console.log(`[${this.displayName}] Fetching prices completed`);
         return true;
       } catch (error) {
-        console.log(error);
-        return false;
+        throw new Error((error as Error).message)
       }
     } else {
       console.log(`[${this.displayName}] No need to fetch prices`);
