@@ -40,7 +40,6 @@ export default function WalletSelector() {
     <Menu>
       <MenuButton
         as={Button}
-        colorScheme="pink"
         rightIcon={<FontAwesomeIcon icon={faChevronDown} />}
       >
         {label}

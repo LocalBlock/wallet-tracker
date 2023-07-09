@@ -22,7 +22,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBars,
   faChevronDown,
+  faHome,
   faObjectGroup,
+  faQuestionCircle,
   faWallet,
 } from "@fortawesome/free-solid-svg-icons";
 import { AllWalletContext } from "../contexts/AllWalletContext";
@@ -32,11 +34,18 @@ import GroupItem from "./Menus/GroupItem";
 import WalletModal from "./Menus/WalletModal";
 import GroupModal from "./Menus/GroupModal";
 import SettingsMenu from "./Menus/SettingsMenu";
+import { Link as ReactRouterLink } from "react-router-dom";
 
 export default function Navbar() {
   const { isOpen, onToggle } = useDisclosure();
   return (
-    <Box as={"header"} position={"sticky"} zIndex={50} top={0}>
+    <Box
+      as={"header"}
+      position={"sticky"}
+      zIndex={10}
+      top={0}
+      backgroundColor={"chakra-body-bg"}
+    >
       <Flex justifyContent={"space-between"} alignItems={"center"} padding={1}>
         <Flex alignItems={"center"} gap={4}>
           <Logo />
@@ -63,9 +72,20 @@ export default function Navbar() {
 const MobileNav = () => {
   return (
     <Stack display={{ md: "none" }} padding={3}>
+      <Flex alignItems={"center"}>
+        <FontAwesomeIcon icon={faHome} pull="left" />
+        <Link as={ReactRouterLink} to={"/"} padding={0} fontSize={"lg"}>
+          Home
+        </Link>
+      </Flex>
       <MobileNavWallet />
       <MobileNavGroup />
-      <Link as={Box}>About</Link>
+      <Flex alignItems={"center"}>
+        <FontAwesomeIcon icon={faQuestionCircle} pull="left" />
+        <Link as={ReactRouterLink} to={"/about"} padding={0} fontSize={"lg"}>
+          About
+        </Link>
+      </Flex>
     </Stack>
   );
 };
@@ -82,7 +102,7 @@ const MobileNavWallet = () => {
       >
         <Flex alignItems={"center"}>
           <FontAwesomeIcon icon={faWallet} pull="left" />
-          <Text fontSize="lg">My wallets</Text>
+          <Text fontSize="lg">Wallets</Text>
         </Flex>
         <FontAwesomeIcon icon={faChevronDown} />
       </Flex>
@@ -116,7 +136,7 @@ const MobileNavGroup = () => {
       >
         <Flex alignItems={"center"}>
           <FontAwesomeIcon icon={faObjectGroup} pull="left" />
-          <Text fontSize="lg">My groups</Text>
+          <Text fontSize="lg">Groups</Text>
         </Flex>
         <FontAwesomeIcon icon={faChevronDown} />
       </Flex>
@@ -149,10 +169,17 @@ const DesktopNav = () => {
   const { userSettings } = useContext(UserSettingsContext);
 
   return (
-    <Stack direction={"row"} display={{ base: "none", md: "initial" }}>
+    <Stack
+      direction={"row"}
+      display={{ base: "none", md: "initial" }}
+      spacing={0}
+    >
+      <Link as={ReactRouterLink} to="/">
+        Home
+      </Link>
       <Popover placement="bottom-start" trigger="hover">
         <PopoverTrigger>
-          <Link>My Wallets</Link>
+          <Link>Wallets</Link>
         </PopoverTrigger>
         <Portal>
           <PopoverContent width={"auto"}>
@@ -181,7 +208,7 @@ const DesktopNav = () => {
       </Popover>
       <Popover placement="bottom-start" trigger="hover">
         <PopoverTrigger>
-          <Link>My groups</Link>
+          <Link>Groups</Link>
         </PopoverTrigger>
         <Portal>
           <PopoverContent width={"auto"}>
@@ -203,18 +230,16 @@ const DesktopNav = () => {
               </Stack>
             </PopoverBody>
             <PopoverFooter textAlign={"center"}>
-              <GroupModal
-                action="Add"
-                //onCloseMenu={onClose}
-                groupNameEdit=""
-              >
+              <GroupModal action="Add" groupNameEdit="">
                 Add a group
               </GroupModal>
             </PopoverFooter>
           </PopoverContent>
         </Portal>
       </Popover>
-      <Link>About</Link>
+      <Link as={ReactRouterLink} to={"/about"}>
+        About
+      </Link>
     </Stack>
   );
 };

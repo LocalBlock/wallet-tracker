@@ -1,15 +1,10 @@
-import React, { useState,Suspense, lazy  } from "react";
-
+import React, { useState, Suspense, lazy } from "react";
 import { AllWalletContext } from "./contexts/AllWalletContext";
 import { UserSettingsContext } from "./contexts/UserSettingsContext";
-
-
 import { getAllWallet, getUserSettings } from "./functions/localstorage";
-
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import Layout from "./pages/Layout";
-
-
+import About from "./pages/About";
 
 //Lazy-loading with dynamic import()
 const Home = lazy(() => import("./pages/Home"));
@@ -19,12 +14,14 @@ const HomePage = () => (
   </Suspense>
 );
 
-
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    children: [{ index: true, element: <HomePage /> }],
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: "/about", element: <About /> },
+    ],
   },
 ]);
 
@@ -38,11 +35,9 @@ export default function App() {
       {/** Provider  */}
       <AllWalletContext.Provider value={{ allWallet, setAllWallet }}>
         <UserSettingsContext.Provider value={{ userSettings, setUserSettings }}>
-            <RouterProvider router={router} />
-
+          <RouterProvider router={router} />
         </UserSettingsContext.Provider>
       </AllWalletContext.Provider>
     </div>
   );
 }
-
