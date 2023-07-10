@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Alert, AlertIcon, Container, VStack } from "@chakra-ui/react";
+import { Alert, AlertIcon, Container, Flex, VStack } from "@chakra-ui/react";
 import CardBalance from "../components/CardBalance";
 import ChainSelector from "../components/ChainSelector";
 import AddressSelector from "../components/WalletSelector";
@@ -48,8 +48,10 @@ export default function Home() {
         selectedChain={userSettings.selectedChain}
         selectedCurrency={userSettings.currency}
       />
-      <ChainSelector />
-      <AddressSelector />
+      <Flex justifyContent={"space-between"} marginY={"10px"}>
+        <ChainSelector />
+        <AddressSelector />
+      </Flex>
       <VStack align={"stretch"} spacing={8}>
         {/* Wallet */}
         <CardBalance
