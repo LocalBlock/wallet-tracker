@@ -19,6 +19,7 @@ import {
   useTheme,
   useToken,
 } from "@chakra-ui/react";
+import { useSize } from "@chakra-ui/react-use-size"
 import {
   formatBalanceCurrency,
   formatBalanceChange,
@@ -77,6 +78,8 @@ export default function ChartBalance({
 }: Props) {
   const { userSettings } = useContext(UserSettingsContext);
   const chartRef = useRef<ChartJS>(null);
+  const boxRef = useRef<HTMLDivElement>(null)
+  const dimensions = useSize(boxRef) // To retreive dimensions fron div vhart container
   const [options, setOptions] = useState<ChartOptions>();
 
   const allActiveWalletFiltered = allActiveWallet.filter(
@@ -167,7 +170,7 @@ export default function ChartBalance({
     if (!chart) {
       return;
     }
-    const gradient = chart.ctx.createLinearGradient(0, 0, 0, 200);
+    const gradient = chart.ctx.createLinearGradient(0, 0, 0, dimensions?dimensions.height:0);
     // console.log('top',chart.chartArea.top);
     // console.log('bottom',chart.chartArea.bottom);
 
@@ -204,12 +207,12 @@ export default function ChartBalance({
       },
     };
     setOptions(options);
-  }, [bgColorValue]);
+  }, [bgColorValue,dimensions]);
   console.log("render chart");
   return (
-    <Box maxHeight={"200px"}>
+    <Box height={"20vh"} ref={boxRef}>
       <Box
-        color={"InfoText"}
+        //color={"InfoText"}
         position={"absolute"}
         marginLeft={"20px"}
         marginTop={"10px"}
