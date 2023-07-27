@@ -6,9 +6,8 @@ name: Docker
 # documentation.
 
 on:
-  workflow_dispatch: #This enables a "Run workflow" button on the Actions tab.
   push:
-    branches: [ "main" ]
+    branches: [ "dev" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
