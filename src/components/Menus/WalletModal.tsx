@@ -124,11 +124,12 @@ export default function WalletModal({ children, allWallet }: Props) {
           }
 
           const newAddressWallet = new AddressWallet(address, ens);
-          // Fetch new address
-          setIsLoadingText("Fetching Balance");
-          await newAddressWallet.fetchData();
           // Add in localstorage
           newAddressWallet.addWallet();
+          // Fetch new address
+          setIsLoadingText("Fetching Balance");
+          await newAddressWallet.fetchBalance(true);
+          await newAddressWallet.fetchPrice()
           //Back to default value
           setIsLoading(false);
           setInputAddress("");
