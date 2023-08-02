@@ -430,3 +430,8 @@ export function getCoinID(chain: string, contractAddress: string) {
   }
   return undefined
 }
+
+export function convertFetchTime(unixTimestamp:number){
+  const date= new Date(unixTimestamp)
+  return date.toLocaleString()
+}

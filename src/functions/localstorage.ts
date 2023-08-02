@@ -74,6 +74,7 @@ export function getAllWallet() {
   return allWallet;
 }
 
+/** Get CoinList from localstorage */
 export function getCoinList() {
   const ls = localStorage.getItem("coinList");
   if (ls) {

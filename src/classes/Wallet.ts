@@ -5,7 +5,13 @@ import { getCoinMarket, getCoinPrices } from "../functions/coingecko";
 import { getCoinID } from "../functions/utils";
 
 import { appSettings } from "../settings/appSettings";
-import { aaveBalance, appSettingsType, beefyBalance } from "../types/types";
+import {
+  aaveBalance,
+  appSettingsType,
+  beefyBalance,
+  fetchCoinMarket,
+  fetchCoinPrices,
+} from "../types/types";
 import { Coin } from "./Coin";
 import { Token } from "./Token";
 
@@ -71,15 +77,11 @@ export class AddressWallet extends Wallet {
   lastFetchPrices: number;
   defi: {
     aaveV2: {
-      [chain in appSettingsType["chains"][number]["id"]]:
-        | aaveBalance
-        | undefined;
+      [chain in appSettingsType["chains"][number]["id"]]: aaveBalance;
     };
 
     aaveV3: {
-      [chain in appSettingsType["chains"][number]["id"]]:
-        | aaveBalance
-        | undefined;
+      [chain in appSettingsType["chains"][number]["id"]]: aaveBalance;
     };
     beefy: beefyBalance[];
   };
@@ -101,53 +103,37 @@ export class AddressWallet extends Wallet {
       this.lastFetchBalance = 0;
       this.lastFetchPrices = 0;
       this.defi = {
-        aaveV2: { ethereum: undefined, "polygon-pos": undefined },
-        aaveV3: { ethereum: undefined, "polygon-pos": undefined },
+        aaveV2: {
+          ethereum: { netWorthUSD: "0", userReservesData: [] },
+          "polygon-pos": { netWorthUSD: "0", userReservesData: [] },
+        },
+        aaveV3: {
+          ethereum: { netWorthUSD: "0", userReservesData: [] },
+          "polygon-pos": { netWorthUSD: "0", userReservesData: [] },
+        },
         beefy: [],
       };
     }
   }
-  /**
-   * Fetch all data from API, balance and if necessary prices
-   * @param forceUpdate
-   * @returns
-   */
-  async fetchData(forceUpdate = false) {
-    const balanceFetch =
-      Date.now() - this.lastFetchBalance > appSettings.fetchDelayBalance;
-    const pricesFetch =
-      Date.now() - this.lastFetchPrices > appSettings.fetchDelayPrices;
-    if (forceUpdate === true || balanceFetch || pricesFetch) {
+  /** Fecth Balance Wallet */
+  async fetchBalance(forceUpdate = false) {
+    if (forceUpdate === true || this.isFetchBalanceNeeded) {
       try {
-        //Fetch Balance
-        if (balanceFetch) {
-          console.log(`[${this.displayName}] Fetch Balance`);
-          await this.getTokensBalance();
-          await this.getAaaveData();
-          await this.getBeefyData();
-          //await this.addCoinID();
-          //Update Last fetch time
-          this.lastFetchBalance = Date.now();
-        }
-        //Fetch Prices
-        console.log(`[${this.displayName}] Fetch prices`);
-        await this.getPrices();
+        console.log(`[${this.displayName}] Fetch Balance`);
+        await this.getTokensBalance();
+        await this.getAaaveData();
+        await this.getBeefyData();
         //Update Last fetch time
-        this.lastFetchPrices = Date.now();
+        this.lastFetchBalance = Date.now();
         // Save in localStorage
         this.updateWallet();
-
-        console.log(
-          `[${this.displayName}] Fetching ${balanceFetch ? "balance" : ""} ${
-            pricesFetch ? " prices" : ""
-          } completed`
-        );
+        console.log(`[${this.displayName}] Fetching balance completed`);
         return true;
       } catch (error) {
-        throw new Error((error as Error).message)
+        throw new Error((error as Error).message);
       }
     } else {
-      console.log(`[${this.displayName}] No need to fetch`);
+      console.log(`[${this.displayName}] No need to fetch balance`);
       return false;
     }
   }
@@ -323,13 +309,7 @@ export class AddressWallet extends Wallet {
     });
   }
 
-  get trimAddress() {
-    return this.address.slice(0, 6) + "..." + this.address.slice(-4);
-  }
-  get displayName() {
-    return this.ens ? this.ens : this.trimAddress;
-  }
-  private getAllTokenID() {
+  getAllCoinID() {
     const allId: string[] = [];
     //Id from tokens
     allId.push("usd-coin"); // Fetch by default USDC for beefy currency conversion
@@ -350,10 +330,28 @@ export class AddressWallet extends Wallet {
     );
     return [...new Set(allId)]; //Remove duplicate
   }
-  private async getPrices() {
-    //5 Add Market data (/coin/market)
-    console.log(`[${this.displayName}] 5. fetch market data`);
-    const responseMarket = await getCoinMarket(this.getAllTokenID().join(","));
+
+  async fetchPrice() {
+    //Fetch Market data (/coin/market)
+    console.log(`[${this.displayName}] Fetch market data`);
+    const responseMarket = await getCoinMarket(this.getAllCoinID().join(","));
+
+    //Fetch price data (/simple/price)
+    console.log(`[${this.displayName}] Fetch prices`);
+    const responsePrices = await getCoinPrices(this.getAllCoinID().join(","));
+
+    this.updatePrices(responseMarket, responsePrices);
+  }
+
+  /**
+   * Update Objet Prices
+   * @param responseMarket Market data from CoinGecko
+   * @param responsePrices Prices data from Coingecko
+   */
+  updatePrices(
+    responseMarket: fetchCoinMarket[],
+    responsePrices: fetchCoinPrices
+  ) {
     //Merge result
     this.tokens.forEach((token) => {
       const index = responseMarket.findIndex(
@@ -402,10 +400,7 @@ export class AddressWallet extends Wallet {
         }
       });
     });
-
     //6 Add price data (/simple/price)
-    console.log(`[${this.displayName}] 6. fetch prices`);
-    const responsePrices = await getCoinPrices(this.getAllTokenID().join(","));
     //Merge result
     this.tokens.forEach((token) => {
       if (token.id) token.prices = responsePrices[token.id];
@@ -433,6 +428,23 @@ export class AddressWallet extends Wallet {
       if (vault.tokens.length > 1)
         vault.defaultPrices = responsePrices["usd-coin"]; // Add USDC price as default price on Multi asset LP vault
     });
+    //Update Last fetch time
+    this.lastFetchPrices = Date.now();
+    // Save in localStorage
+    this.updateWallet();
+  }
+
+  get trimAddress() {
+    return this.address.slice(0, 6) + "..." + this.address.slice(-4);
+  }
+  get displayName() {
+    return this.ens ? this.ens : this.trimAddress;
+  }
+  get isFetchBalanceNeeded() {
+    return Date.now() - this.lastFetchBalance > appSettings.fetchDelayBalance;
+  }
+  get isFetchPriceNeeded() {
+    return Date.now() - this.lastFetchPrices > appSettings.fetchDelayPrices;
   }
 }
 
@@ -459,56 +471,77 @@ export class CustomWallet extends Wallet {
       });
     }
   }
+  /**
+   * Fetch prices and store in local storage
+   * Used when a custom wallet is edited
+   * @param forceUpdate Force update
+   * @returns
+   */
   async fetchData(forceUpdate = false) {
     if (
-      (forceUpdate === true ||
-        Date.now() - this.lastFetchPrices > appSettings.fetchDelayPrices) &&
+      (forceUpdate === true || this.isFetchPriceNeeded) &&
       this.coins.length != 0
     ) {
       try {
         console.log(`[${this.displayName}] Start fetch prices...`);
-        await this.getPrices();
+        console.log(`[${this.displayName}] Fetch market data`);
+        const responseMarket = await getCoinMarket(
+          this.getAllCoinID().join(",")
+        );
+        console.log(`[${this.displayName}] Fetch prices data`);
+        const responsePrices = await getCoinPrices(
+          this.getAllCoinID().join(",")
+        );
+        this.updatePrices(responseMarket, responsePrices);
         this.lastFetchPrices = Date.now();
         // Save in localStorage
         this.updateWallet();
         console.log(`[${this.displayName}] Fetching prices completed`);
         return true;
       } catch (error) {
-        throw new Error((error as Error).message)
+        throw new Error((error as Error).message);
       }
     } else {
       console.log(`[${this.displayName}] No need to fetch prices`);
       return false;
     }
   }
-  private getAllCoinID() {
+  getAllCoinID() {
     const allId: string[] = [];
     //Id from Coins
     this.coins.forEach((coin) => allId.push(coin.id));
     return allId;
   }
-  private async getPrices() {
-    //3 Add Market data (/coin/market)
-    console.log(`[${this.name}] 1. Add market data`);
-    const responseMarket = await getCoinMarket(this.getAllCoinID().join(","));
-    //Merge result
+  /**
+   * Update Objet Prices
+   * @param responseMarket Market data from CoinGecko
+   * @param responsePrices Prices data from Coingecko
+   */
+  updatePrices(
+    responseMarket: fetchCoinMarket[],
+    responsePrices: fetchCoinPrices
+  ) {
+    //Merge result market
     this.coins.forEach((coin) => {
       const index = responseMarket.findIndex(
         (coinMarket) => coinMarket.id === coin.id
       );
       Object.assign(coin, responseMarket[index]);
     });
-
-    //4 Add price data (/simple/price)
-    console.log(`[${this.name}] 2. Add prices data`);
-    const responsePrices = await getCoinPrices(this.getAllCoinID().join(","));
-    //Merge result
+    //Merge result price
     this.coins.forEach((coin) => {
       coin.prices = responsePrices[coin.id];
     });
+    //Update Last fetch time
+    this.lastFetchPrices = Date.now();
+    // Save in localStorage
+    this.updateWallet();
   }
   get displayName() {
     return this.name;
+  }
+  get isFetchPriceNeeded() {
+    return Date.now() - this.lastFetchPrices > appSettings.fetchDelayPrices;
   }
 }
 

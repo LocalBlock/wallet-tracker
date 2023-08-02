@@ -8,6 +8,8 @@ A simple wallet tracker web application to display current balance and prices fr
 [![Chakra-badge]][Chakra-url]
 [![Chart.js-badge]][Chart.js-url]
 
+<img src="doc/screenshot.png">
+
 ## Features
 
 * Supported chains : Ethereum and Polygon.
