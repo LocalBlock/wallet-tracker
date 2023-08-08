@@ -1,4 +1,5 @@
 # Build stage
+# Build app with vite
 FROM node:alpine AS build
 
 WORKDIR /app
@@ -13,11 +14,23 @@ COPY . .
 # Building our application
 RUN yarn build
 
-# Fetching the latest nginx image
-FROM nginx
+# Build server
+FROM node:alpine
+WORKDIR /srv
 
-# Copying built assets from build
-COPY --from=build /app/dist /usr/share/nginx/html
+# Install server app dependencies (production)
+COPY ./server/package*.json ./
+RUN npm ci --omit=dev
 
-# Copying our nginx.conf
-COPY /docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./server/server.js ./
+
+# Copy app from build stage to server
+COPY --from=build /app/dist ./app
+
+# Set Node.js to production
+ENV NODE_ENV=production
+
+CMD [ "node","server.js" ]
+
+# Server port
+EXPOSE 3000

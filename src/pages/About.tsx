@@ -39,6 +39,7 @@ export default function About() {
     <Box>
       <div>Version : v{import.meta.env.VITE_REACT_APP_VERSION}</div>
       <div>Connecté: {isConnected?"oui":"non"}</div>
+      <div>APIKEY :{import.meta.env.VITE_APIKEY_ALCHEMY}</div>
       <Button onClick={()=>socket.disconnect()}>Test</Button>
     </Box>
   )

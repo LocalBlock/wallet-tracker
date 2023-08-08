@@ -1,46 +1,44 @@
-// const express = require('express')
-// const path = require('path')
-
-// const { Server } = require('socket.io');
-const PORT = 5000
+const express = require("express");
+const compression = require('compression')
+const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 // const fetch = require('node-fetch');
 
-// // start the express server with the appropriate routes for our webhook and web requests
-// // var app = express()
-// //   .use(express.static(path.join(__dirname, 'public')))
-// //   .use(express.json())
-// //   .post('/alchemyhook', (req, res) => { notificationReceived(req); res.status(200).end() })
-// //   .get('/*', (req, res) => res.sendFile(path.join(__dirname + '/index.html')))
-// //   .listen(PORT, () => console.log(`Listening on ${PORT}`))
+const appDirName = "/app";
+const PORT = 3000;
 
-const express = require("express");
+console.log(__dirname, process.env.NODE_ENV);
 
+// // Express server with the appropriate routes for our webhook and web requests
 const app = express()
+  .use(express.static(path.join(__dirname, appDirName))) //Serve static files
   .use(express.json())
+  .use(compression()) //gzip compression
+  .get("/*", (req, res) =>
+    res.sendFile(path.join(__dirname, appDirName, "/index.html"))
+  )
   .post("/alchemyhook", (req, res) => {
     notificationReceived(req);
     res.status(200).end();
   });
-const http = require("http");
+
+// Start express serveur
 const server = http.createServer(app);
-const { Server } = require("socket.io");
+server.listen(PORT, () => console.log(`Listening on ${PORT}`));
 
-server.listen(PORT,() => console.log(`Listening on ${PORT}`))
-
-// start the websocket server
-//const io = socketIO(app);
+// Start the websocket server
 const io = new Server(server, { cors: { origin: "http://localhost:5173" } });
-
 
 // listen for client connections/calls on the WebSocket server
 io.on("connection", (socket) => {
   console.log("Client connected");
   //socket.emit("connect")
   socket.on("disconnect", () => console.log("Client disconnected"));
-//   socket.on("register address", (msg) => {
-//     //send address to Alchemy to add to notification
-//     addAddress(msg);
-//   });
+  //   socket.on("register address", (msg) => {
+  //     //send address to Alchemy to add to notification
+  //     addAddress(msg);
+  //   });
 });
 
 // notification received from Alchemy from the webhook. Let the clients know.
