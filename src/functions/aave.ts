@@ -7,11 +7,9 @@ import { aaveBalance } from "../types/types";
 export async function fetchAave(
   address: string,
   version: "v2" | "v3",
-  chain: typeof appSettings.chains[number]
+  chain: (typeof appSettings.chains)[number]
 ) {
-  const API_KEY = import.meta.env.VITE_APIKEY_ALCHEMY;
-  const rpcUrl =
-    "https://" + chain.alchemyMainnet + ".g.alchemy.com/v2/" + API_KEY;
+  const rpcUrl = `/alchemyfetch?network=${chain.alchemyMainnet}`;
   // User address to fetch data for
   const user = address;
   // This is the provider used in Aave UI, it checks the chainId locally to reduce RPC calls with frequent network switches, but requires that the rpc url and chainId to remain consistent with the request being sent from the wallet (i.e. actively detecting the active chainId)
@@ -94,8 +92,8 @@ export async function fetchAave(
     if (data.underlyingBalance != "0") {
       // Push reserveData with non-zero balance
       userReservesData.push({
-        id: '',
-        image:'',
+        id: "",
+        image: "",
         prices: {
           usd: 0,
           usd_24h_change: 0,
@@ -104,7 +102,7 @@ export async function fetchAave(
           btc: 0,
           btc_24h_change: 0,
         },
-        sparkline_in_7d:{price:[]},
+        sparkline_in_7d: { price: [] },
         underlyingAsset: data.underlyingAsset,
         underlyingBalance: data.underlyingBalance,
         underlyingBalanceUSD: data.underlyingBalanceUSD,

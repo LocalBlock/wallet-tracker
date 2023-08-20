@@ -1,9 +1,14 @@
 import { appSettings } from "../settings/appSettings";
 import { Token } from "../classes/Token";
-import { aaveBalance, appSettingsType, beefyBalance } from "../types/types";
+import {
+  aaveBalance,
+  appSettingsType,
+  beefyBalance,
+  userSettings,
+} from "../types/types";
 import { AddressWallet, CustomWallet, Web3Wallet } from "../classes/Wallet";
 import { Coin } from "../classes/Coin";
-import { getCoinList } from "./localstorage";
+import { getCoinList, updateUserSettings } from "./localstorage";
 /**
  * Format balance for a token
  * @param balance
@@ -428,10 +433,30 @@ export function getCoinID(chain: string, contractAddress: string) {
     );
     if (result) return result.id;
   }
-  return undefined
+  return undefined;
 }
 
-export function convertFetchTime(unixTimestamp:number){
-  const date= new Date(unixTimestamp)
-  return date.toLocaleString()
+export function convertFetchTime(unixTimestamp: number) {
+  const date = new Date(unixTimestamp);
+  return date.toLocaleString();
+}
+
+/**
+ * Check if all properties from appSettings.defaultUserSettings are present in current userSetting
+ * If a properties is missing , then add default value from appsetting
+ * @param currentUserSettings
+ * @returns Missing properties
+ */
+export function checkUserSettings(currentUserSettings: userSettings) {
+  const defaultKeys = Object.keys(appSettings.defaultUserSettings);
+  for (const key of defaultKeys) {
+    if (!Object.hasOwn(currentUserSettings, key)) {
+      // Add missing key in user config
+      updateUserSettings(
+        key as keyof userSettings,
+        appSettings.defaultUserSettings[key as keyof userSettings]
+      );
+      console.log("[Settings] : Add new setting", key);
+    }
+  }
 }

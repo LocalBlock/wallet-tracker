@@ -1,5 +1,6 @@
 import { Network } from "alchemy-sdk";
 import { Wallet } from "../classes/Wallet";
+import { WebhookWithAddresses } from "../components/WebhooksSetting";
 
 export interface aaveBalance {
   /**Valeur total sur le protocol */
@@ -128,11 +129,12 @@ export interface fetchCoinPrices {
  * User Settings
  */
 export interface userSettings {
+  web3UserId: string;
+  webhooks: WebhookWithAddresses[];
   /** Display currency */
   currency: string;
   selectedChain: appSettingsType["chains"][number]["id"][];
   selectedWallet: { type: "wallet" | "group"; index: number };
-
   groups: {
     name: string;
     wallets: Wallet["id"][];
@@ -213,7 +215,7 @@ export interface appSettingsType {
   /**Delay between each fetchPrices */
   fetchDelayPrices: number;
   /** Delay between each update of coinList from CoinGecko */
-  fetchDelayCoinList:number;
+  fetchDelayCoinList: number;
   /** Interval of fetching function */
   intervalCheck: number;
   /** Default userSettings, used when there is no usersetting in localstorage */

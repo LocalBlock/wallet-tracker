@@ -1,6 +1,7 @@
 import { createContext } from "react";
 
 import { userSettings } from "../types/types";
+import { appSettings } from "../settings/appSettings";
 
 type UserSettingsContextType = {
   userSettings: userSettings;
@@ -8,12 +9,7 @@ type UserSettingsContextType = {
 };
 
 export const UserSettingsContext = createContext<UserSettingsContextType>({
-  userSettings: {
-    currency: "usd",
-    selectedChain: ["ethereum", "polygon-pos"],
-    groups: [],
-    selectedWallet: { type: "wallet", index: 0 },
-  },
+  userSettings: appSettings.defaultUserSettings,
   setUserSettings: () => {
     null;
   },

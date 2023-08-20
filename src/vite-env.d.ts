@@ -1,8 +1,12 @@
 /// <reference types="vite-plugin-svgr/client" />
 /// <reference types="vite/client" />
 interface ImportMetaEnv {
-  /** Alchemy APIKEY */
-  readonly VITE_APIKEY_ALCHEMY: string;
+  /** Alchemy Api Key */
+  readonly VITE_ALCHEMY_APIKEY: string;
+  /** Alchemy Auth Token */
+  readonly VITE_ALCHEMY_AUTHTOKEN: string;
+  /** Webhook Url for alchemy notifications */
+  readonly VITE_ALCHEMY_WEBHOOKURL: string
   /** App version from package.json */
   readonly VITE_REACT_APP_VERSION: string;
   // more env variables...

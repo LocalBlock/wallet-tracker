@@ -28,6 +28,7 @@ import {
 } from "../../functions/localstorage";
 import { AllWalletContext } from "../../contexts/AllWalletContext";
 import { UserSettingsContext } from "../../contexts/UserSettingsContext";
+import { ServerStatusContext } from "../../contexts/ServerStatusContext";
 import { AddressWallet, CustomWallet, Web3Wallet } from "../../classes/Wallet";
 
 interface Props {
@@ -43,6 +44,7 @@ export default function WalletModal({ children, allWallet }: Props) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { setAllWallet } = useContext(AllWalletContext);
   const { setUserSettings } = useContext(UserSettingsContext);
+  const serverStatus = useContext(ServerStatusContext);
   const toast = useToast();
 
   const handleInputChange = (e: {
@@ -129,7 +131,7 @@ export default function WalletModal({ children, allWallet }: Props) {
           // Fetch new address
           setIsLoadingText("Fetching Balance");
           await newAddressWallet.fetchBalance(true);
-          await newAddressWallet.fetchPrice()
+          await newAddressWallet.fetchPrice();
           //Back to default value
           setIsLoading(false);
           setInputAddress("");
@@ -170,7 +172,7 @@ export default function WalletModal({ children, allWallet }: Props) {
 
   //console.log("Render: AddressModal");
   return (
-    <Button onClick={onOpen}>
+    <Button onClick={onOpen} isDisabled={!serverStatus.isApiKey} title={!serverStatus.isApiKey?"No apiKey define !":""}>
       {children}
       <Modal
         isOpen={isOpen}

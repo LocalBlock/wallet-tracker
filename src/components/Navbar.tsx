@@ -22,6 +22,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBars,
   faChevronDown,
+  faGear,
   faHome,
   faObjectGroup,
   faQuestionCircle,
@@ -80,6 +81,12 @@ const MobileNav = () => {
       </Flex>
       <MobileNavWallet />
       <MobileNavGroup />
+      <Flex alignItems={"center"}>
+        <FontAwesomeIcon icon={faGear} pull="left" />
+        <Link as={ReactRouterLink} to={"/settings"} padding={0} fontSize={"lg"}>
+          Settings
+        </Link>
+      </Flex>
       <Flex alignItems={"center"}>
         <FontAwesomeIcon icon={faQuestionCircle} pull="left" />
         <Link as={ReactRouterLink} to={"/about"} padding={0} fontSize={"lg"}>
@@ -237,6 +244,9 @@ const DesktopNav = () => {
           </PopoverContent>
         </Portal>
       </Popover>
+      <Link as={ReactRouterLink} to={"/settings"}>
+        Settings
+      </Link>
       <Link as={ReactRouterLink} to={"/about"}>
         About
       </Link>

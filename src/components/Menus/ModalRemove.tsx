@@ -21,6 +21,8 @@ import {
 } from "../../functions/localstorage";
 import { UserSettingsContext } from "../../contexts/UserSettingsContext";
 import { AllWalletContext } from "../../contexts/AllWalletContext";
+import { AddressWallet, Web3Wallet } from "../../classes/Wallet";
+import { addAndRemoveAddresses, deleteWebhook } from "../../functions/Alchemy";
 
 interface ModalRemoveProps {
   alertHeader: string;
@@ -40,7 +42,7 @@ export default function ModalRemove({
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
   const { allWallet, setAllWallet } = useContext(AllWalletContext);
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
     const lsGroups = userSettings.groups;
     // Remove group
     if (groupName) {
@@ -87,13 +89,63 @@ export default function ModalRemove({
       ) {
         // back to first wallet
         updateUserSettings("selectedWallet", { type: "wallet", index: 0 });
-      } else if(userSettings.selectedWallet.index>removeWalletIndex) {
-        // decrecment selected index if necessary 
+      } else if (userSettings.selectedWallet.index > removeWalletIndex) {
+        // decrecment selected index if necessary
         updateUserSettings("selectedWallet", {
           type: "wallet",
           index: --userSettings.selectedWallet.index,
         });
       }
+
+      //Remove notifications webhook
+      const walletToRemove = allWallet[removeWalletIndex];
+      if (
+        walletToRemove instanceof AddressWallet ||
+        walletToRemove instanceof Web3Wallet
+      ) {
+        const webhooksWithAddressToRemove = userSettings.webhooks.filter((wh) =>
+          wh.addresses.includes(walletToRemove.address)
+        );
+        if (webhooksWithAddressToRemove.length != 0) {
+          let newWebhooksUserSetting = userSettings.webhooks;
+          for await (const webhook of webhooksWithAddressToRemove) {
+            if (webhook.addresses.length === 1) {
+              console.log(
+                `[Webhooks] Delete webhook ${webhook.id} on ${webhook.network}`
+              );
+              //Delete webhook
+              await deleteWebhook(webhook.id);
+              // Save new congig
+              newWebhooksUserSetting = newWebhooksUserSetting.filter(
+                (wh) => wh.id != webhook.id
+              );
+            } else {
+              console.log(
+                `[Webhooks] Remove address ${walletToRemove.address} on ${webhook.id}:${webhook.network}`
+              );
+              //Remove adressse
+              await addAndRemoveAddresses(
+                webhook.id,
+                [],
+                [walletToRemove.address]
+              );
+              // Update localStorage
+              const newWebhookConfig = {
+                ...webhook,
+                ["addresses"]: webhook.addresses.filter(
+                  (address) => address != walletToRemove.address
+                ),
+              };
+              newWebhooksUserSetting = newWebhooksUserSetting.map((wh) =>
+                wh.id === webhook.id ? newWebhookConfig : wh
+              );
+            }
+          }
+          //Update local storage
+          updateUserSettings("webhooks", newWebhooksUserSetting);
+        }
+      }
+
       allWallet[removeWalletIndex].removeWallet(); // Remove wallet on local storage
       updateUserSettings("groups", lsGroups); // Update userSettings on  localstorage
       setUserSettings(getUserSettings()); // Set state userSettings with new data from localstorage

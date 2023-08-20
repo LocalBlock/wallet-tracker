@@ -7,24 +7,19 @@ import {
 } from "../classes/Wallet";
 import { appSettings } from "../settings/appSettings";
 
+/**
+ * Update userSettings in local storage, if setting not exist, it will be added
+ * @param setting Any setting from type definition
+ * @param value Any value from type definition
+ */
 export function updateUserSettings(
-  setting: string,
-  value:
-    | userSettings["currency"]
-    | userSettings["selectedChain"]
-    | userSettings["groups"]
-    | userSettings["selectedWallet"]
+  setting: keyof userSettings,
+  value: userSettings[keyof userSettings]
 ) {
   const data = getUserSettings();
-  if (Object.hasOwn(data, setting)) {
-    Object.defineProperty(data, setting, {
-      value: value,
-    });
-    localStorage.setItem("userSettings", JSON.stringify(data));
-  } else
-    throw new Error(
-      "Setting: " + setting + " not exist in userSettings localstorage"
-    );
+  // Better to create a newData object to prevent inference problem (thanks chatGPT)
+  const newData = { ...data, [setting]: value };
+  localStorage.setItem("userSettings", JSON.stringify(newData));
 }
 /**
  * Get userSettings from localstorage, store defaultUserSettings if not exist

@@ -1,15 +1,20 @@
-import { Alchemy, AlchemySettings, Network, Utils } from "alchemy-sdk";
+import {
+  Alchemy,
+  AlchemySettings,
+  Network,
+  WebhookType,
+  Utils,
+} from "alchemy-sdk";
 import { appSettings } from "../settings/appSettings";
 import { wait } from "../functions/utils";
-const API_KEY = import.meta.env.VITE_APIKEY_ALCHEMY;
 
 //TODO : JSDOC
 export async function getAllTokenBalance(address: string, chainId: string) {
-  //Select Network config
+  // Configures the Alchemy SDK
   const config: AlchemySettings = {
-    apiKey: API_KEY,
-    network: appSettings.chains.find((chain) => chain.id === chainId)
-      ?.alchemyMainnet,
+    url: `/alchemyfetch?network=${
+      appSettings.chains.find((chain) => chain.id === chainId)?.alchemyMainnet
+    }`,
   };
   const alchemy = new Alchemy(config);
   //Fetch Data, loop if result has pageKey, and add pause preventing THROUGHPUT LIMITS (computing units per second (CUPS) limit in free :330)
@@ -50,22 +55,92 @@ export async function getAllTokenBalance(address: string, chainId: string) {
 export async function getNativeBalance(address: string, chainId: string) {
   //Select Network config
   const config: AlchemySettings = {
-    apiKey: API_KEY,
-    network: appSettings.chains.find((chain) => chain.id === chainId)
-      ?.alchemyMainnet,
+    url: `/alchemyfetch?network=${
+      appSettings.chains.find((chain) => chain.id === chainId)?.alchemyMainnet
+    }`,
   };
   const alchemy = new Alchemy(config);
   const balanceHex = await alchemy.core.getBalance(address, "latest");
   return Utils.formatEther(balanceHex);
 }
 
-export async function resolveENS(ens:string) {
+export async function resolveENS(ens: string) {
   const config: AlchemySettings = {
-    apiKey: API_KEY,
-    network: Network.ETH_MAINNET
+    url: `/alchemyfetch?network=${Network.ETH_MAINNET}`,
   };
   const alchemy = new Alchemy(config);
   console.log("Resolving ENS " + ens);
-  const ensAddresse = await alchemy.core.resolveName(ens)
-  return ensAddresse
+  const ensAddresse = await alchemy.core.resolveName(ens);
+  return ensAddresse;
+}
+
+// Webhooks
+// https://docs.alchemy.com/reference/notify-api-quickstart
+// Get all webhooks
+export async function getAllWebhooks() {
+  const config: AlchemySettings = {
+    authToken: "FAKE_VALUE",
+    url: `/alchemynotify`,
+  };
+  const alchemy = new Alchemy(config);
+  return await alchemy.notify.getAllWebhooks();
+}
+
+export async function getAllAddresses(webhook_id: string) {
+  const config: AlchemySettings = {
+    authToken: "FAKE_VALUE",
+    url: `/alchemynotify`,
+  };
+  const alchemy = new Alchemy(config);
+  return await alchemy.notify.getAddresses(webhook_id, {
+    limit: 10,
+  });
+}
+
+export async function createWebhook(network:Network, addresses: string[]) {
+  const config: AlchemySettings = {
+    authToken: "FAKE_VALUE",
+    url: `/alchemynotify`,
+  };
+  const alchemy = new Alchemy(config);
+
+  // Set weekhook URL: In dev from env.local, in prod origin
+  const webhookUrl =
+    import.meta.env.MODE === "production"
+      ? window.location.origin + "/alchemyhook"
+      : import.meta.env.VITE_ALCHEMY_WEBHOOKURL;
+
+  return await alchemy.notify.createWebhook(
+    webhookUrl,
+    WebhookType.ADDRESS_ACTIVITY,
+    {
+      addresses: addresses,
+      network: network,
+    }
+  );
+}
+
+export async function addAndRemoveAddresses(
+  webhook_id: string,
+  addressesToAdd: string[] = [],
+  addressesToRemove: string[] = []
+) {
+  const config: AlchemySettings = {
+    authToken: "FAKE_VALUE",
+    url: `/alchemynotify`,
+  };
+  const alchemy = new Alchemy(config);
+  return await alchemy.notify.updateWebhook(webhook_id, {
+    addAddresses: addressesToAdd,
+    removeAddresses: addressesToRemove,
+  });
+}
+
+export async function deleteWebhook(webhook_id:string){
+  const config: AlchemySettings = {
+    authToken: "FAKE_VALUE",
+    url: `/alchemynotify`,
+  };
+  const alchemy = new Alchemy(config);
+  return await alchemy.notify.deleteWebhook(webhook_id);
 }

@@ -1,7 +1,7 @@
-import { io } from 'socket.io-client';
+import { SocketOptions, io } from 'socket.io-client';
+import { getUserSettings } from './functions/localstorage';
 
-// production : connect to the host that serves the file
-// developpement : connect to the separate express server
-const URL = import.meta.env.MODE === 'production' ? "" : 'http://localhost:3000';
-
-export const socket = io(URL);
+const web3UserId= getUserSettings().web3UserId
+const options:SocketOptions=web3UserId?{auth:{web3UserId}}:{}
+// Connect to websocket server on localhost
+export const socket = io("",options);
