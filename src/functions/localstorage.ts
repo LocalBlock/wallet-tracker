@@ -6,8 +6,7 @@ import {
   Web3Wallet,
 } from "../classes/Wallet";
 import { appSettings } from "../settings/appSettings";
-import { emitMessage } from "../App";
-
+import { socket } from "../socket";
 /**
  * Update userSettings in local storage, if setting not exist, it will be added.
  * Can save also on server
@@ -25,7 +24,7 @@ export function updateUserSettings(
   const newData = { ...data, [setting]: value };
   localStorage.setItem("userSettings", JSON.stringify(newData));
   if (newData.web3UserId&&saveToServer) {
-    emitMessage("saveUserSettings",newData)
+    socket.emit("saveUserSettings",newData)
     console.log("[Server] userSettings saved");
   }
 }

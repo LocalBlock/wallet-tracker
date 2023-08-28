@@ -23,7 +23,7 @@ import { UserSettingsContext } from "../../contexts/UserSettingsContext";
 import { AllWalletContext } from "../../contexts/AllWalletContext";
 import { AddressWallet, Web3Wallet } from "../../classes/Wallet";
 import { addAndRemoveAddresses, deleteWebhook } from "../../functions/Alchemy";
-import { emitMessage } from "../../App";
+import { socket } from "../../socket";
 
 interface ModalRemoveProps {
   alertHeader: string;
@@ -167,7 +167,7 @@ export default function ModalRemove({
     }
     // Save to server
     const settingsUpdated = getUserSettings();
-    emitMessage("saveUserSettings", settingsUpdated);
+    socket.emit("saveUserSettings", settingsUpdated);
     console.log("[Server] userSettings saved");
     setUserSettings(settingsUpdated); // Set state userSettings with new data from localstorage
     onClose(); //Close modal

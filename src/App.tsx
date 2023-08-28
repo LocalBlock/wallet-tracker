@@ -1,10 +1,10 @@
 import React, { useState, useEffect, Suspense, lazy } from "react";
+import { socket } from "./socket";
 import { AllWalletContext } from "./contexts/AllWalletContext";
 import { UserSettingsContext } from "./contexts/UserSettingsContext";
 import { ServerStatusContext } from "./contexts/ServerStatusContext";
 import { getAllWallet, getUserSettings } from "./functions/localstorage";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { socket } from "./socket";
 import { ChakraProvider, ColorModeScript, useToast } from "@chakra-ui/react";
 import { userSettings } from "./types/types";
 import Layout from "./pages/Layout";
@@ -49,11 +49,6 @@ const router = createBrowserRouter([
   },
 ]);
 // END ROUTER DEFENITION
-
-// Emit event to server
-export function emitMessage(messageName:string,messageData:unknown){
-  socket.emit(messageName,messageData)
-}
 
 // Check currentsettings
 checkUserSettings(getUserSettings());

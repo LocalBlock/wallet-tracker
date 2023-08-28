@@ -13,7 +13,7 @@ import React, { useContext, useState } from "react";
 import { UserSettingsContext } from "../contexts/UserSettingsContext";
 import { getUserSettings, updateUserSettings } from "../functions/localstorage";
 
-import { emitMessage } from "../App";
+import { socket } from "../socket";
 
 export default function Web3UserId() {
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
@@ -27,20 +27,20 @@ export default function Web3UserId() {
     setUserSettings(newUserSettings);
     // Save in server
     if (web3UserId){
-      emitMessage("saveUserSettings", newUserSettings);
+      socket.emit("saveUserSettings", newUserSettings);
     }
   };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setWeb3UserId(e.target.value);
   };
   const handleLoad = () => {
-    emitMessage("loadUserSettings",web3UserId)
+    socket.emit("loadUserSettings",web3UserId)
   };
 
   return (
-    <Box padding={5} borderWidth="1px" borderRadius="lg">
+    <Box padding={4} borderWidth="2px" borderRadius="lg">
       <FormControl display="flex" alignItems="center">
-        <FormLabel mb="0">Web3Id:</FormLabel>
+        <FormLabel mb="0">Web3Id&nbsp;:</FormLabel>
         <Input
           placeholder="eth address"
           onChange={handleChange}

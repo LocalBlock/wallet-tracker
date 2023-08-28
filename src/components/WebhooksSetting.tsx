@@ -17,6 +17,8 @@ import {
   FormHelperText,
   Flex,
   Badge,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
 import { ServerStatusContext } from "../contexts/ServerStatusContext";
 import {
@@ -263,51 +265,58 @@ export default function WebhooksSettings() {
               : "Disabled : Missing alchemy auth token or web3id"}
           </FormHelperText>
         </FormControl>
-        <TableContainer marginTop={5}>
-          <Table variant="simple">
-            <Thead>
-              <Tr>
-                <Th paddingInlineStart={0}>Address</Th>
-                <Th paddingX={0} width={0}>
-                  Ethereum
-                </Th>
-                <Th paddingInlineEnd={0} width={0}>
-                  Polygon
-                </Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {allWalletWithAddress.map((wallet) => (
-                <Tr key={wallet.id}>
-                  <Td paddingInlineStart={0}>{wallet.displayName}</Td>
-                  <Td textAlign={"center"}>
-                    <Checkbox
-                      name={wallet.address}
-                      value={Network.ETH_MAINNET}
-                      onChange={handleChange}
-                      isDisabled={!isActive || !serverStatus.isConnected}
-                      isChecked={
-                        webhooksStatus[Network.ETH_MAINNET][wallet.address]
-                      }
-                    />
-                  </Td>
-                  <Td textAlign={"center"} paddingInlineEnd={0}>
-                    <Checkbox
-                      name={wallet.address}
-                      value={Network.MATIC_MAINNET}
-                      onChange={handleChange}
-                      isDisabled={!isActive || !serverStatus.isConnected}
-                      isChecked={
-                        webhooksStatus[Network.MATIC_MAINNET][wallet.address]
-                      }
-                    />
-                  </Td>
+        {allWalletWithAddress.length != 0 ? (
+          <TableContainer marginTop={5}>
+            <Table variant="simple">
+              <Thead>
+                <Tr>
+                  <Th paddingInlineStart={0}>Address</Th>
+                  <Th paddingX={0} width={0}>
+                    Ethereum
+                  </Th>
+                  <Th paddingInlineEnd={0} width={0}>
+                    Polygon
+                  </Th>
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </TableContainer>
-        <Box textAlign={{ base: "center", md: "end" }} marginTop={5}>
+              </Thead>
+              <Tbody>
+                {allWalletWithAddress.map((wallet) => (
+                  <Tr key={wallet.id}>
+                    <Td paddingInlineStart={0}>{wallet.displayName}</Td>
+                    <Td textAlign={"center"}>
+                      <Checkbox
+                        name={wallet.address}
+                        value={Network.ETH_MAINNET}
+                        onChange={handleChange}
+                        isDisabled={!isActive || !serverStatus.isConnected}
+                        isChecked={
+                          webhooksStatus[Network.ETH_MAINNET][wallet.address]
+                        }
+                      />
+                    </Td>
+                    <Td textAlign={"center"} paddingInlineEnd={0}>
+                      <Checkbox
+                        name={wallet.address}
+                        value={Network.MATIC_MAINNET}
+                        onChange={handleChange}
+                        isDisabled={!isActive || !serverStatus.isConnected}
+                        isChecked={
+                          webhooksStatus[Network.MATIC_MAINNET][wallet.address]
+                        }
+                      />
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Alert status="warning" marginTop={5}>
+            <AlertIcon />
+            Add one wallet to configure these settings
+          </Alert>
+        )}
+        <Box textAlign={{ base: "center", md: "end" }} marginTop={5} display={allWalletWithAddress.length=== 0?"none":undefined }>
           <Button
             onClick={handleSave}
             isDisabled={!isActive || !serverStatus.isConnected}
