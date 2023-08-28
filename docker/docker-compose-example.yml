@@ -6,7 +6,7 @@ services:
       - VITE_ALCHEMY_APIKEY= # Add your APIKEY
       - VITE_ALCHEMY_AUTHTOKEN= # Add your AUTHTOKEN
     volumes:
-      - data:/srv/users # Persistent users data
+      - data:/srv/data # Persistent data
     restart: always
     ports:
       - 8080:3000 # Change only host port if necessary

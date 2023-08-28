@@ -1,21 +1,41 @@
-const express = require("express");
-const compression = require("compression");
-const cors = require("cors");
-const axios = require("axios");
-const path = require("path");
-const http = require("http");
-const { Server } = require("socket.io");
-const fs = require("fs").promises;
+import express from "express";
+import compression from "compression";
+import cors from "cors";
+import axios from "axios";
+import path from "path";
+import url from "url";
+import http from "http";
+import { Server } from "socket.io";
+import { promises as fs } from "fs";
+import dotenv from "dotenv";
+import { NotificationdStorage } from "./Notification.js";
 
 // Get environment variable in developpement mode
 if (process.env.NODE_ENV != "production")
-  require("dotenv").config({ path: "../.env.local" });
+  dotenv.config({ path: "../.env.local" });
 
 // constants
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const appDirName = "/app";
 const PORT = 3000;
 const APIKEY = process.env.VITE_ALCHEMY_APIKEY;
 const AUTHTOKEN = process.env.VITE_ALCHEMY_AUTHTOKEN;
+
+try {
+  // Create directory if not exist
+  await fs.mkdir("data/users", { recursive: true });
+  await fs.mkdir("data/notifications", { recursive: true });
+  await fs.mkdir("data/coingecko", { recursive: true });
+  try {
+    await fs.access("data/notifications/notifications.json");
+  } catch (error) {
+    //File not exist create one
+    await fs.writeFile("data/notifications/notifications.json", "[]");
+  }
+} catch (error) {
+  console.log(error);
+}
 
 console.log("Alchemy:", "APIKEY=" + APIKEY, "AUTHTOKEN=" + AUTHTOKEN);
 
@@ -37,7 +57,6 @@ const app = express()
   .post("/alchemyfetch", (req, res) => {
     //rewrite url
     const url = `https://${req.query.network}.g.alchemy.com/v2/${APIKEY}`;
-    //const url= 'https://user1691920818183.requestly.dev/alchemy'
     const options = {
       method: "POST",
       url: url,
@@ -69,7 +88,8 @@ const app = express()
           // la requête a été faite mais aucune réponse n’a été reçue
           // `error.request` est une instance de XMLHttpRequest dans le navigateur
           // et une instance de http.ClientRequest avec node.js
-          console.log(error.request);
+          console.log("Request", error.request);
+          res.status(500).send("Error on request");
         } else {
           // quelque chose s’est passé lors de la construction de la requête et cela
           // a provoqué une erreur
@@ -78,7 +98,7 @@ const app = express()
       });
   })
 
-  //For alchemy webhook
+  //Proxy backend for alchemy webhook
   .all("/alchemynotify*", (req, res) => {
     if (!AUTHTOKEN) {
       console.log("No AuthToken");
@@ -95,7 +115,6 @@ const app = express()
         case "/update-webhook-addresses":
         case "/update-webhook":
           url = `https://dashboard.alchemy.com/api${req.params[0]}`;
-          //url = "https://user1691920818183.requestly.dev/alchemy";
           body = req.body;
           break;
         case "/webhook-addresses":
@@ -106,8 +125,6 @@ const app = express()
           console.log(`Param ${req.params[0]} in request are unkown`);
           break;
       }
-
-      console.log(url);
       const options = {
         method: req.method,
         url: url,
@@ -120,7 +137,6 @@ const app = express()
         },
         data: body,
       };
-      fetch;
       axios
         .request(options)
         .then((response) => {
@@ -171,13 +187,22 @@ server.listen(PORT, () => console.log(`Listening on ${PORT}`));
 // Start the websocket server
 const io = new Server(server);
 
+// Initialise notification object
+const notifications = await NotificationdStorage.init(
+  io,
+  "data/notifications/notifications.json"
+);
+console.log(
+  "Pending Notifications",
+  notifications.currentStoreNotifications.length
+);
+
 // Middleware for Auth
 io.use((socket, next) => {
   const web3UserId = socket.handshake.auth.web3UserId;
   if (web3UserId) {
     // Existing User
     socket.web3UserId = web3UserId;
-    socket.apiKey= APIKEY ? true : false
   }
   next();
 });
@@ -185,6 +210,7 @@ io.use((socket, next) => {
 // listen for client connections/calls on the WebSocket server
 io.on("connection", (socket) => {
   console.log("Client connected " + socket.web3UserId ?? "anonymous");
+  //on connection emit status server
   socket.emit(
     "status",
     JSON.stringify({
@@ -193,22 +219,29 @@ io.on("connection", (socket) => {
     })
   );
 
+  //on connection check pending notification
+  if (notifications.currentStoreNotifications != 0) {
+    // Wait 2 sec and send
+    setTimeout(() => {
+      notifications.sendPendingNotifications(socket.web3UserId);
+      clearTimeout;
+    }, 2000);
+  }
+
   socket.on("disconnect", () =>
     console.log("Client disconnected " + socket.web3UserId ?? "anonymous")
   );
 
   socket.on("saveUserSettings", async (userSettings) => {
     try {
-      // Create directory if not exist
-      await fs.mkdir("users", { recursive: true });
       // Save usersettings In file
       await fs.writeFile(
-        `users/${userSettings.web3UserId}.json`,
+        `data/users/${userSettings.web3UserId}.json`,
         JSON.stringify(userSettings)
       );
       // Save Web3UserId on current socket
       socket.web3UserId = userSettings.web3UserId;
-      socket.emit("info", "Settings saved");
+      console.log("Settings of " + userSettings.web3UserId + " saved");
     } catch (error) {
       socket.emit("error", error.message);
       console.log(error);
@@ -217,7 +250,7 @@ io.on("connection", (socket) => {
 
   socket.on("loadUserSettings", async (web3UserIdClient) => {
     try {
-      const data = await fs.readFile(`users/${web3UserIdClient}.json`, {
+      const data = await fs.readFile(`data/users/${web3UserIdClient}.json`, {
         encoding: "utf8",
       });
       socket.emit("userSettings", JSON.parse(data));
@@ -226,32 +259,10 @@ io.on("connection", (socket) => {
       console.log(error);
     }
   });
-
-  //   socket.on("register address", (msg) => {
-  //     //send address to Alchemy to add to notification
-  //     addAddress(msg);
-  //   });
 });
 
 // notification received from Alchemy from the webhook. Let the clients know.
 async function notificationReceived(req) {
   console.log("Notification received!");
-  // fetch connected users
-  for await (let [, socket] of io.of("/").sockets) {
-    if (socket.web3UserId) {
-      // Not anonymous socket user
-      const userSettings = JSON.parse(
-        await fs.readFile(`users/${socket.web3UserId}.json`, "utf8")
-      );
-      if (userSettings.webhooks || userSettings.webhooks.lenght != 0) {
-        // Contain webhook
-        if (
-          userSettings.webhooks.some((webhook) => webhook.id === req.body.webhookId)
-        ) {
-          // Have coresponding webhook
-          socket.emit("notification", JSON.stringify(req.body));
-        }
-      }
-    }
-  }
+  notifications.newNotification(req.body);
 }

@@ -6,20 +6,28 @@ import {
   Web3Wallet,
 } from "../classes/Wallet";
 import { appSettings } from "../settings/appSettings";
+import { socket } from "../socket";
 
 /**
- * Update userSettings in local storage, if setting not exist, it will be added
+ * Update userSettings in local storage, if setting not exist, it will be added.
+ * Can save also on server
  * @param setting Any setting from type definition
  * @param value Any value from type definition
+ * @param saveToServer if true save userSettings to server; Default : true
  */
 export function updateUserSettings(
   setting: keyof userSettings,
-  value: userSettings[keyof userSettings]
+  value: userSettings[keyof userSettings],
+  saveToServer=true
 ) {
   const data = getUserSettings();
   // Better to create a newData object to prevent inference problem (thanks chatGPT)
   const newData = { ...data, [setting]: value };
   localStorage.setItem("userSettings", JSON.stringify(newData));
+  if (newData.web3UserId&&saveToServer) {
+    socket.emit("saveUserSettings", newData);
+    console.log("[Server] userSettings saved");
+  }
 }
 /**
  * Get userSettings from localstorage, store defaultUserSettings if not exist

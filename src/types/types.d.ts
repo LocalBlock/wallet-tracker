@@ -129,8 +129,6 @@ export interface fetchCoinPrices {
  * User Settings
  */
 export interface userSettings {
-  web3UserId: string;
-  webhooks: WebhookWithAddresses[];
   /** Display currency */
   currency: string;
   selectedChain: appSettingsType["chains"][number]["id"][];
@@ -139,6 +137,9 @@ export interface userSettings {
     name: string;
     wallets: Wallet["id"][];
   }[];
+  web3UserId: string;
+  webhooks: WebhookWithAddresses[];
+  notificationsEnable: boolean;
 }
 
 /** Application settings */

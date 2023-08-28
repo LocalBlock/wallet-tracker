@@ -98,9 +98,7 @@ export default function App() {
         status: "error",
       });
     }
-    function onInfo(value: string) {
-      toast({ title: "OK", description: value, status: "success" });
-    }
+
     function onUsersettings(data: userSettings) {
       localStorage.setItem("userSettings", JSON.stringify(data));
       setUserSettings(getUserSettings());
@@ -111,31 +109,21 @@ export default function App() {
       });
     }
 
-    // function onNotification(value: string) {
-    //   //console.log(JSON.parse(value));
-    //   setAlchemyEvents(previous => [...previous, value]);
-    // }
-
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("status", onCheckServer);
     socket.on("error", onError);
-    socket.on("info", onInfo);
     socket.on("userSettings", onUsersettings);
-
-    //socket.on("notification", onNotification);
 
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("status", onCheckServer);
       socket.off("error", onError);
-      socket.off("info", onInfo);
       socket.off("userSettings", onUsersettings);
-
-      //socket.off("notification", onNotification);
     };
   }, [toast]);
+
   console.log("----------->Render App<----------");
   return (
     <div className="App">

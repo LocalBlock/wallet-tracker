@@ -22,7 +22,11 @@ export async function getAllCoinID() {
 
   localStorage.setItem(lsKeyCg, JSON.stringify(lsCoinlist)); // save in localstorage
 }
-
+/**
+ * Use this to obtain all the coins market data (price, market cap, volume), per page.
+ * @param coinID The ids of the coin, comma separated crytocurrency symbols (base).
+ * @returns
+ */
 export async function getCoinMarket(coinID: string) {
   const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinID}&order=market_cap_desc&per_page=100&page=1&sparkline=true&price_change_percentage=24h%2C7d%2C30d`;
   const r = await fetchAPI(url);

@@ -144,3 +144,12 @@ export async function deleteWebhook(webhook_id:string){
   const alchemy = new Alchemy(config);
   return await alchemy.notify.deleteWebhook(webhook_id);
 }
+
+export async function updateWebhookStatus(webhook_id:string,is_active:boolean){
+  const config: AlchemySettings = {
+    authToken: "FAKE_VALUE",
+    url: `/alchemynotify`,
+  };
+  const alchemy = new Alchemy(config);
+  return await alchemy.notify.updateWebhook(webhook_id,{isActive:is_active});
+}

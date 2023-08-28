@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useContext, useEffect, useState } from "react";
+import React, { ChangeEvent, useContext, useState } from "react";
 import {
   Box,
   Button,
@@ -12,17 +12,18 @@ import {
   Td,
   Th,
   Thead,
-  Tooltip,
   Tr,
   useToast,
+  FormHelperText,
+  Flex,
+  Badge,
 } from "@chakra-ui/react";
 import { ServerStatusContext } from "../contexts/ServerStatusContext";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import {
   addAndRemoveAddresses,
   createWebhook,
   deleteWebhook,
+  updateWebhookStatus,
 } from "../functions/Alchemy";
 import {
   getAllWallet,
@@ -45,6 +46,7 @@ export type WebhookWithAddresses = Webhook & {
 };
 
 function parseWebhooksSettings() {
+  //Create webhookStatus from all chain and wallet address
   const currentWebhooksStatus: webhooksStatus = {};
   appSettings.chains.forEach((chain) => {
     currentWebhooksStatus[chain.alchemyMainnet] = {};
@@ -54,6 +56,7 @@ function parseWebhooksSettings() {
       }
     });
   });
+  // Pass value from usersettings
   getUserSettings().webhooks.forEach((webhook) => {
     getAllWallet().forEach((wallet) => {
       if (wallet instanceof AddressWallet || wallet instanceof Web3Wallet) {
@@ -103,13 +106,34 @@ export default function WebhooksSettings() {
   const toast = useToast();
   const initialConfig = parseWebhooksSettings();
   const [webhooksStatus, setWebhooksStatus] = useState(initialConfig);
+  const [isActive, setIsActive] = useState(userSettings.notificationsEnable);
 
   const allWalletWithAddress = allWallet.filter(
     (wallet) => wallet.type === "AddressWallet" || wallet.type === "Web3Wallet"
   ) as unknown as AddressWallet[] | Web3Wallet[];
 
   const isConfigurable =
-  serverStatus.isAuthToken && userSettings.web3UserId ? true : false;
+    serverStatus.isConnected &&
+    serverStatus.isAuthToken &&
+    userSettings.web3UserId
+      ? true
+      : false;
+
+  // Active or desactive Webhooks
+  const handleIsActive = async () => {
+    //Update state on Alchemy
+    for await (const webhook of userSettings.webhooks) {
+      await updateWebhookStatus(webhook.id, !isActive);
+    }
+    //Update userSetting
+    const newWebhookSettings = userSettings.webhooks.map((webhook) => {
+      return { ...webhook, ["isActive"]: !isActive };
+    });
+    setIsActive(!isActive);
+    updateUserSettings("webhooks", newWebhookSettings, false);
+    updateUserSettings("notificationsEnable", !isActive);
+    setUserSettings(getUserSettings());
+  };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const network = e.target.value as Network;
@@ -121,15 +145,16 @@ export default function WebhooksSettings() {
     };
     setWebhooksStatus(newStatus);
   };
+
   const handleSave = async () => {
     // compare between all changes mades in form with initial Status
-    let newWebhooksUserSetting=userSettings.webhooks
+    let newWebhooksUserSetting = userSettings.webhooks;
     for await (const chainConfig of appSettings.chains) {
       const network = chainConfig.alchemyMainnet;
       const initialCount = countTrue(initialConfig[network]);
       const newCount = countTrue(webhooksStatus[network]);
       const webhookId = userSettings.webhooks.find(
-        (webhook) => webhook.network === chainConfig.alchemyMainnet
+        (webhook) => webhook.network === network
       )?.id;
 
       const added: string[] = [];
@@ -146,55 +171,33 @@ export default function WebhooksSettings() {
         }
       }
 
-      // Create Webhook
-      if (initialCount === 0 && added.length != 0) {
-        console.log("[Webhooks] Create webhook on", network);
-        try {
+      try {
+        let isSaved = false;
+        // Create Webhook
+        if (initialCount === 0 && added.length != 0) {
+          console.log("[Webhooks] Create webhook on", network);
+
           const result = await createWebhook(network, added);
           const createdWebhook = {
             ...result,
             ["addresses"]: added,
           };
           // Save setting
-          newWebhooksUserSetting=[...newWebhooksUserSetting,createdWebhook]
-          // Feedback
-          toast({
-            title: "Settings saved.",
-            description: "Notifications updated",
-            status: "success",
-          });
-        } catch (error) {
-          console.error(error);
-          toast({
-            title: "Error.",
-            description: "Sowething's wrong, notifications not updated",
-            status: "error",
-          });
+          newWebhooksUserSetting = [...newWebhooksUserSetting, createdWebhook];
+          isSaved = true;
         }
-      }
-      //Delete Webhook
-      if (initialCount != 0 && newCount === 0) {
-        console.log(`[Webhooks] Delete webhook ${webhookId} on ${network}`);
-        try {
+        //Delete Webhook
+        if (initialCount != 0 && newCount === 0) {
+          console.log(`[Webhooks] Delete webhook ${webhookId} on ${network}`);
+
           await deleteWebhook(webhookId as string);
-          newWebhooksUserSetting=newWebhooksUserSetting.filter((wh) => wh.id != webhookId)
-          toast({
-            title: "Settings saved.",
-            description: "Notifications updated",
-            status: "success",
-          });
-        } catch (error) {
-          console.error(error);
-          toast({
-            title: "Error.",
-            description: "Sowething's wrong, notifications not updated",
-            status: "error",
-          });
+          newWebhooksUserSetting = newWebhooksUserSetting.filter(
+            (wh) => wh.id != webhookId
+          );
+          isSaved = true;
         }
-      }
-      //Add et remove adressses
-      if (initialCount != 0 && newCount != 0 && initialCount != newCount) {
-        try {
+        //Add et remove adressses
+        if (initialCount != 0 && newCount != 0 && initialCount != newCount) {
           console.log(
             `[Webhooks] Add and remove addresses on ${webhookId}:${network}`
           );
@@ -215,19 +218,21 @@ export default function WebhooksSettings() {
           newWebhooksUserSetting = newWebhooksUserSetting.map((wh) =>
             wh.id === webhookId ? newWebhookConfig : wh
           );
+          isSaved = true;
+        }
+        isSaved &&
           toast({
             title: "Settings saved.",
             description: "Notifications updated",
             status: "success",
           });
-        } catch (error) {
-          console.error(error);
-          toast({
-            title: "Error.",
-            description: "Sowething's wrong, notifications not updated",
-            status: "error",
-          });
-        }
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Error.",
+          description: "Sowething's wrong, notifications not updated",
+          status: "error",
+        });
       }
     }
     //Update locastorage and state
@@ -235,60 +240,63 @@ export default function WebhooksSettings() {
     setUserSettings(getUserSettings());
   };
 
-  //Synchronize with an update of usersettings
-  useEffect(() => {
-    setWebhooksStatus(parseWebhooksSettings());
-    console.log("useEffect syncro usersetting");
-  }, [userSettings.webhooks]);
-
   console.log("[Render] Webhook Settings");
   return (
     <>
-      <Box padding={5} borderWidth="1px" borderRadius="lg">
-        <FormControl display="flex" alignItems="center">
-          <FormLabel htmlFor="email-alerts" mb="0">
-            Enable address activity notification?
-          </FormLabel>
-          <Switch id="email-alerts" isDisabled={!isConfigurable} />
-          <Tooltip
-            label={
-              isConfigurable
-                ? "Active real time address activity notifications."
-                : "Disabled : No alchemy auth token or no web3id"
-            }
-            placement="auto-end"
-          >
-            <FontAwesomeIcon icon={faQuestionCircle} pull="right" size="xs" />
-          </Tooltip>
+      <Box padding={4} borderWidth="2px" borderRadius="lg">
+        <FormControl>
+          <Flex alignItems="center" gap={2}>
+            <Badge colorScheme="yellow">Beta</Badge>
+            <FormLabel htmlFor="email-alerts" mb="0">
+              Enable notifications ?
+            </FormLabel>
+            <Switch
+              id="email-alerts"
+              isDisabled={!isConfigurable}
+              onChange={handleIsActive}
+              isChecked={isActive}
+            />
+          </Flex>
+          <FormHelperText>
+            {isConfigurable
+              ? "Active real time notifications. Receive a notifictaion when there is activity on wallet addresses."
+              : "Disabled : Missing alchemy auth token or web3id"}
+          </FormHelperText>
         </FormControl>
-        <TableContainer>
-          <Table variant="simple" size={{ base: "sm", md: "md" }}>
+        <TableContainer marginTop={5}>
+          <Table variant="simple">
             <Thead>
               <Tr>
-                <Th>Address</Th>
-                <Th width={0}>Ethereum</Th>
-                <Th width={0}>Polygon</Th>
+                <Th paddingInlineStart={0}>Address</Th>
+                <Th paddingX={0} width={0}>
+                  Ethereum
+                </Th>
+                <Th paddingInlineEnd={0} width={0}>
+                  Polygon
+                </Th>
               </Tr>
             </Thead>
             <Tbody>
               {allWalletWithAddress.map((wallet) => (
                 <Tr key={wallet.id}>
-                  <Td>{wallet.displayName}</Td>
+                  <Td paddingInlineStart={0}>{wallet.displayName}</Td>
                   <Td textAlign={"center"}>
                     <Checkbox
                       name={wallet.address}
                       value={Network.ETH_MAINNET}
                       onChange={handleChange}
+                      isDisabled={!isActive || !serverStatus.isConnected}
                       isChecked={
                         webhooksStatus[Network.ETH_MAINNET][wallet.address]
                       }
                     />
                   </Td>
-                  <Td textAlign={"center"}>
+                  <Td textAlign={"center"} paddingInlineEnd={0}>
                     <Checkbox
                       name={wallet.address}
                       value={Network.MATIC_MAINNET}
                       onChange={handleChange}
+                      isDisabled={!isActive || !serverStatus.isConnected}
                       isChecked={
                         webhooksStatus[Network.MATIC_MAINNET][wallet.address]
                       }
@@ -299,7 +307,14 @@ export default function WebhooksSettings() {
             </Tbody>
           </Table>
         </TableContainer>
-        <Button onClick={handleSave}>Save</Button>
+        <Box textAlign={{ base: "center", md: "end" }} marginTop={5}>
+          <Button
+            onClick={handleSave}
+            isDisabled={!isActive || !serverStatus.isConnected}
+          >
+            Save
+          </Button>
+        </Box>
       </Box>
     </>
   );
