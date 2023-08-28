@@ -1,6 +1,6 @@
 import axios from "axios";
 import { promises as fs } from "fs";
-
+import path from "path";
 /**
  * Manage data from coingecko.
  * Make cache data for coinlist and imageURl in JSON files.
@@ -28,14 +28,21 @@ class Coingecko {
    */
   static async init(coinlistFile, imageUrlFile) {
     const delayFetchNewData = 240 * 60 * 60 * 1000;
+
     // Create files if not exist
     try {
       await fs.access(coinlistFile);
       await fs.access(imageUrlFile);
     } catch (error) {
-      //File not exist create one
-      await fs.writeFile(coinlistFile, "{}");
-      await fs.writeFile(imageUrlFile, "[]");
+      try {
+        // Create directory if not exist
+        await fs.mkdir(path.dirname(coinlistFile), { recursive: true });
+        //Files not exist create one
+        await fs.writeFile(coinlistFile, "{}");
+        await fs.writeFile(imageUrlFile, "[]");
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     // Read file
@@ -87,7 +94,7 @@ class Coingecko {
    * @param {string} network
    * @param {string} contractAddress
    * @param {string} asset use for native token
-   * @returns 
+   * @returns
    */
   async getIdAndImage(network, contractAddress, asset) {
     // If there is no contract, it's (i suppose) native token
@@ -115,22 +122,22 @@ class Coingecko {
   }
   /**
    * Get coingecko Id
-   * @param {string} network 
-   * @param {string} contractAddress 
+   * @param {string} network
+   * @param {string} contractAddress
    * @returns {string}
    */
   #getId(network, contractAddress) {
     // Tranform netwok format, Alchemy->Coingecko ex: 'ETH_MAINET' to 'ethereum'
-    let platform
+    let platform;
     switch (network) {
       case "ETH_MAINNET":
       case "ETH_GOERLI":
-        platform= "ethereum";
-        break
+        platform = "ethereum";
+        break;
       case "MATIC_MAINNET":
       case "MATIC_MUMBAI":
-        platform= "polygon-pos";
-        break
+        platform = "polygon-pos";
+        break;
       default:
         throw new Error(network + "is unknown");
     }
@@ -144,7 +151,7 @@ class Coingecko {
   }
   /**
    * Get url image from coingecko or Cache data
-   * @param {string} id 
+   * @param {string} id
    * @returns {Promise<string>}
    */
   async #getImage(id) {

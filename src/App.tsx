@@ -50,6 +50,11 @@ const router = createBrowserRouter([
 ]);
 // END ROUTER DEFENITION
 
+// Emit event to server
+export function emitMessage(messageName:string,messageData:unknown){
+  socket.emit(messageName,messageData)
+}
+
 // Check currentsettings
 checkUserSettings(getUserSettings());
 
@@ -108,6 +113,8 @@ export default function App() {
         status: "success",
       });
     }
+
+
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);

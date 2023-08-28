@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import { coingecko } from "./Coingecko.js";
+import path from "path";
 
 export class NotificationdStorage {
   #delayWebhook = 3000;
@@ -11,6 +12,14 @@ export class NotificationdStorage {
     this.timeout = undefined;
   }
   static async init(io, file) {
+    try {
+      await fs.access(file);
+    } catch (error) {
+      // Create directory if not exist
+      await fs.mkdir(path.dirname(file), { recursive: true });
+      //File not exist create one
+      await fs.writeFile(file, "[]");
+    }
     try {
       const data = await fs.readFile(file, {
         encoding: "utf8",

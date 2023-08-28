@@ -22,17 +22,10 @@ const PORT = 3000;
 const APIKEY = process.env.VITE_ALCHEMY_APIKEY;
 const AUTHTOKEN = process.env.VITE_ALCHEMY_AUTHTOKEN;
 
+// Initialise data directory
 try {
   // Create directory if not exist
   await fs.mkdir("data/users", { recursive: true });
-  await fs.mkdir("data/notifications", { recursive: true });
-  await fs.mkdir("data/coingecko", { recursive: true });
-  try {
-    await fs.access("data/notifications/notifications.json");
-  } catch (error) {
-    //File not exist create one
-    await fs.writeFile("data/notifications/notifications.json", "[]");
-  }
 } catch (error) {
   console.log(error);
 }

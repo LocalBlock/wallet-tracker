@@ -23,6 +23,7 @@ import { UserSettingsContext } from "../../contexts/UserSettingsContext";
 import { AllWalletContext } from "../../contexts/AllWalletContext";
 import { AddressWallet, Web3Wallet } from "../../classes/Wallet";
 import { addAndRemoveAddresses, deleteWebhook } from "../../functions/Alchemy";
+import { emitMessage } from "../../App";
 
 interface ModalRemoveProps {
   alertHeader: string;
@@ -48,17 +49,19 @@ export default function ModalRemove({
     if (groupName) {
       //Update on localstorage
       const newData = lsGroups.filter((element) => element.name != groupName);
-      updateUserSettings("groups", newData);
+      updateUserSettings("groups", newData, false);
       //Update selectedAddress
       if (
         userSettings.selectedWallet.type === "group" &&
         lsGroups[userSettings.selectedWallet.index].name === groupName
       ) {
         //Group supprimé etait selctionné
-        updateUserSettings("selectedWallet", { type: "wallet", index: 0 }); //Première addresse par defaut
+        updateUserSettings(
+          "selectedWallet",
+          { type: "wallet", index: 0 },
+          false
+        ); //Première addresse par defaut
       }
-      setUserSettings(getUserSettings());
-      onClose(); //Close modal
     }
     //remove wallet
     if (walletId) {
@@ -75,7 +78,11 @@ export default function ModalRemove({
           userSettings.selectedWallet.type === "group" &&
           userSettings.selectedWallet.index === index
         ) {
-          updateUserSettings("selectedWallet", { type: "wallet", index: 0 }); // Switch to first wallet if selected group is remove
+          updateUserSettings(
+            "selectedWallet",
+            { type: "wallet", index: 0 },
+            false
+          ); // Switch to first wallet if selected group is remove
         }
       }
       const removeWalletIndex = allWallet.findIndex(
@@ -88,13 +95,21 @@ export default function ModalRemove({
         userSettings.selectedWallet.index === removeWalletIndex
       ) {
         // back to first wallet
-        updateUserSettings("selectedWallet", { type: "wallet", index: 0 });
+        updateUserSettings(
+          "selectedWallet",
+          { type: "wallet", index: 0 },
+          false
+        );
       } else if (userSettings.selectedWallet.index > removeWalletIndex) {
         // decrecment selected index if necessary
-        updateUserSettings("selectedWallet", {
-          type: "wallet",
-          index: --userSettings.selectedWallet.index,
-        });
+        updateUserSettings(
+          "selectedWallet",
+          {
+            type: "wallet",
+            index: --userSettings.selectedWallet.index,
+          },
+          false
+        );
       }
 
       //Remove notifications webhook
@@ -142,16 +157,20 @@ export default function ModalRemove({
             }
           }
           //Update local storage
-          updateUserSettings("webhooks", newWebhooksUserSetting);
+          updateUserSettings("webhooks", newWebhooksUserSetting, false);
         }
       }
 
       allWallet[removeWalletIndex].removeWallet(); // Remove wallet on local storage
-      updateUserSettings("groups", lsGroups); // Update userSettings on  localstorage
-      setUserSettings(getUserSettings()); // Set state userSettings with new data from localstorage
+      updateUserSettings("groups", lsGroups, false); // Update userSettings on localstorage
       setAllWallet(getAllWallet()); // Set state allAddress with new data from localstorage
-      onClose(); //Close Modal
     }
+    // Save to server
+    const settingsUpdated = getUserSettings();
+    emitMessage("saveUserSettings", settingsUpdated);
+    console.log("[Server] userSettings saved");
+    setUserSettings(settingsUpdated); // Set state userSettings with new data from localstorage
+    onClose(); //Close modal
   };
 
   return (

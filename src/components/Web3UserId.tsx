@@ -13,7 +13,7 @@ import React, { useContext, useState } from "react";
 import { UserSettingsContext } from "../contexts/UserSettingsContext";
 import { getUserSettings, updateUserSettings } from "../functions/localstorage";
 
-import { socket } from "../socket";
+import { emitMessage } from "../App";
 
 export default function Web3UserId() {
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
@@ -27,14 +27,14 @@ export default function Web3UserId() {
     setUserSettings(newUserSettings);
     // Save in server
     if (web3UserId){
-      socket.emit("saveUserSettings", newUserSettings);
+      emitMessage("saveUserSettings", newUserSettings);
     }
   };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setWeb3UserId(e.target.value);
   };
   const handleLoad = () => {
-    socket.emit("loadUserSettings",web3UserId)
+    emitMessage("loadUserSettings",web3UserId)
   };
 
   return (

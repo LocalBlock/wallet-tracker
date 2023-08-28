@@ -22,7 +22,7 @@ WORKDIR /srv
 COPY ./server/package*.json ./
 RUN npm ci --omit=dev
 
-COPY ./server/server.js ./
+COPY ./server/*.js ./
 
 # Copy app from build stage to server
 COPY --from=build /app/dist ./app
