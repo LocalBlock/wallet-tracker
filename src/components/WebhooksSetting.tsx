@@ -19,6 +19,7 @@ import {
   Badge,
   Alert,
   AlertIcon,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 import { ServerStatusContext } from "../contexts/ServerStatusContext";
 import {
@@ -114,12 +115,45 @@ export default function WebhooksSettings() {
     (wallet) => wallet.type === "AddressWallet" || wallet.type === "Web3Wallet"
   ) as unknown as AddressWallet[] | Web3Wallet[];
 
-  const isConfigurable =
-    serverStatus.isConnected &&
-    serverStatus.isAuthToken &&
-    userSettings.web3UserId
-      ? true
-      : false;
+  // Determine status et reason if there is a missing requierement
+  const { isConfigurable, reason } = (() => {
+    const isValidUrl = (hostname: string) => {
+      if (import.meta.env.MODE === "development") return true;
+      return !(
+        hostname === "localhost" ||
+        // [::1] is the IPv6 localhost address.
+        hostname === "[::1]" ||
+        // 127.0.0.1/8 is considered localhost for IPv4.
+        hostname.match(
+          /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
+        ) ||
+        // 192.168.X.X
+        hostname.match(
+          /^192.168(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){2}$/
+        )
+      );
+    };
+
+    const isConfigurable =
+      serverStatus.isConnected &&
+      serverStatus.isAuthToken &&
+      userSettings.web3UserId &&
+      isValidUrl(window.location.hostname)
+        ? true
+        : false;
+
+    let reason = "";
+    if (!serverStatus.isConnected) reason = "not connected to server, ";
+    if (!serverStatus.isAuthToken) reason = reason + "missing auth token, ";
+    if (!userSettings.web3UserId) reason = reason + "missing web3id, ";
+    if (!isValidUrl(window.location.hostname))
+      reason = reason + "url is invalid (local), ";
+    
+      return {
+      isConfigurable: isConfigurable,
+      reason: reason.charAt(0).toUpperCase() + reason.substring(1).slice(0, -2), // Capitalize first character and remove 2 last character ', '
+    };
+  })();
 
   // Active or desactive Webhooks
   const handleIsActive = async () => {
@@ -246,7 +280,7 @@ export default function WebhooksSettings() {
   return (
     <>
       <Box padding={4} borderWidth="2px" borderRadius="lg">
-        <FormControl>
+        <FormControl isInvalid={!isConfigurable}>
           <Flex alignItems="center" gap={2}>
             <Badge colorScheme="yellow">Beta</Badge>
             <FormLabel htmlFor="email-alerts" mb="0">
@@ -260,10 +294,10 @@ export default function WebhooksSettings() {
             />
           </Flex>
           <FormHelperText>
-            {isConfigurable
-              ? "Active real time notifications. Receive a notifictaion when there is activity on wallet addresses."
-              : "Disabled : Missing alchemy auth token or web3id"}
+            Active real time notifications. Receive a notifictaion when there is
+            activity on wallet addresses.
           </FormHelperText>
+          <FormErrorMessage>{reason}</FormErrorMessage>
         </FormControl>
         {allWalletWithAddress.length != 0 ? (
           <TableContainer marginTop={5}>
@@ -288,7 +322,7 @@ export default function WebhooksSettings() {
                         name={wallet.address}
                         value={Network.ETH_MAINNET}
                         onChange={handleChange}
-                        isDisabled={!isActive || !serverStatus.isConnected}
+                        isDisabled={!isActive || !isConfigurable}
                         isChecked={
                           webhooksStatus[Network.ETH_MAINNET][wallet.address]
                         }
@@ -299,7 +333,7 @@ export default function WebhooksSettings() {
                         name={wallet.address}
                         value={Network.MATIC_MAINNET}
                         onChange={handleChange}
-                        isDisabled={!isActive || !serverStatus.isConnected}
+                        isDisabled={!isActive || !isConfigurable}
                         isChecked={
                           webhooksStatus[Network.MATIC_MAINNET][wallet.address]
                         }
@@ -316,10 +350,14 @@ export default function WebhooksSettings() {
             Add one wallet to configure these settings
           </Alert>
         )}
-        <Box textAlign={{ base: "center", md: "end" }} marginTop={5} display={allWalletWithAddress.length=== 0?"none":undefined }>
+        <Box
+          textAlign={{ base: "center", md: "end" }}
+          marginTop={5}
+          display={allWalletWithAddress.length === 0 ? "none" : undefined}
+        >
           <Button
             onClick={handleSave}
-            isDisabled={!isActive || !serverStatus.isConnected}
+            isDisabled={!isActive || !isConfigurable}
           >
             Save
           </Button>
