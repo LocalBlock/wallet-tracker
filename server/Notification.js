@@ -56,21 +56,32 @@ export class NotificationdStorage {
    */
   async #sendIncomingNotification() {
     const notifications = await this.#parseIncomingNotifications();
+
     for await (const notif of notifications) {
-      if (
-        notif.assetSent.length === 0 &&
-        notif.assetReceived.length === 0 &&
-        !notif.assetTransfert
-      ) {
+      if (notif.toUser) {
+        if (
+          notif.assetSent.length === 0 &&
+          notif.assetReceived.length === 0 &&
+          !notif.assetTransfert &&
+          notif.erc1155Sent.length === 0 &&
+          notif.erc1155Received.length === 0 &&
+          notif.erc1155ransfert.length === 0
+        ) {
+          console.log(
+            "[Incoming Notification] : A notification is ignore because no activity was detected. (Approuve transaction?)"
+          );
+        } else {
+          // Send notification or save if user not connected
+          if (!this.#sendNotificationUser(notif.toUser, notif))
+            await this.#saveNotification(notif);
+          else console.log("[Incoming Notification] : Sent to " + notif.toUser);
+        }
+      } else
         console.log(
-          "[Incoming Notification] : A notification is ignore because no activity was detected. (Approuve transaction?)"
+          '[Incoming Notification] : A notification is ignore because no user was found for webhookId "' +
+            notif.webhookId +
+            '"'
         );
-      } else {
-        // Send notification or save if user not connected
-        if (!this.#sendNotificationUser(notif.toUser, notif))
-          await this.#saveNotification(notif);
-        else console.log("[Incoming Notification] : Sent to " + notif.toUser);
-      }
     }
     this.incomingNotifications = []; //Job done, flush incoming transactions
   }
@@ -133,59 +144,121 @@ export class NotificationdStorage {
 
     //Analyse transcations and build result
     const result = [];
-    //console.log(transactions);
     for await (const tx of transactions) {
       //Analyse activity
       const assetSent = [];
       const assetReceived = [];
-      let assetTransfert = undefined;
-      for await (const act of tx.activity) {
-        if (act.value != 0) {
-          //ignore external with 0 value
-          const coingeckoResult = await coingecko.getIdAndImage(
-            tx.network,
-            act.rawContract.address,
-            act.asset
-          );
-          //Transfert between addresses of webhook
-          if (
-            tx.addresses.includes(act.fromAddress) &&
-            tx.addresses.includes(act.toAddress)
-          ) {
-            assetTransfert = {
-              fromAddress: act.fromAddress,
-              toAddress: act.toAddress,
-              value: act.value,
-              asset: act.asset,
-              contractAddress: act.rawContract.address,
-              id: coingeckoResult.id,
-              image: coingeckoResult.image,
-            };
-          } else {
-            if (tx.addresses.includes(act.fromAddress)) {
-              // send
-              assetSent.push({
-                fromAddress: act.fromAddress,
-                toAddress: act.toAddress,
-                value: act.value,
-                asset: act.asset,
-                contractAddress: act.rawContract.address,
-                id: coingeckoResult.id,
-                image: coingeckoResult.image,
-              });
-            }
-            if (tx.addresses.includes(act.toAddress)) {
-              // Received
-              assetReceived.push({
-                fromAddress: act.fromAddress,
-                toAddress: act.toAddress,
-                value: act.value,
-                asset: act.asset,
-                contractAddress: act.rawContract.address,
-                id: coingeckoResult.id,
-                image: coingeckoResult.image,
-              });
-            }
+      const assetTransfert = [];
+      const erc1155Sent = [];
+      const erc1155Received = [];
+      const erc1155ransfert = [];
+      const coingeckoResults = await coingecko.getIdsAndImages(
+        tx.network,
+        tx.activity
+      );
+      // Start analyse only if a user was found
+      if (tx.toUser) {
+        for (const [index, act] of tx.activity.entries()) {
+          switch (act.category) {
+            case "erc1155":
+              {
+                //Transfert between addresses of webhook
+                if (
+                  tx.addresses.includes(act.fromAddress) &&
+                  tx.addresses.includes(act.toAddress)
+                ) {
+                  erc1155ransfert.push({
+                    fromAddress: act.fromAddress,
+                    toAddress: act.toAddress,
+                    value: parseInt(act.erc1155Metadata[0].value, 16), // Don't know how to manage this array
+                    tokenId: parseInt(act.erc1155Metadata[0].tokenId, 16), // Don't know how to manage this array
+                    asset: act.asset,
+                    contractAddress: act.rawContract.address,
+                    id: coingeckoResults[index].id,
+                    image: coingeckoResults[index].image,
+                  });
+                } else {
+                  if (tx.addresses.includes(act.fromAddress)) {
+                    // send
+                    erc1155Sent.push({
+                      fromAddress: act.fromAddress,
+                      toAddress: act.toAddress,
+                      value: parseInt(act.erc1155Metadata[0].value, 16), // Don't know how to manage this array
+                      tokenId: parseInt(act.erc1155Metadata[0].tokenId, 16), // Don't know how to manage this array
+                      asset: act.asset,
+                      contractAddress: act.rawContract.address,
+                      id: coingeckoResults[index].id,
+                      image: coingeckoResults[index].image,
+                    });
+                  }
+                  if (tx.addresses.includes(act.toAddress)) {
+                    // Received
+                    erc1155Received.push({
+                      fromAddress: act.fromAddress,
+                      toAddress: act.toAddress,
+                      value: parseInt(act.erc1155Metadata[0].value, 16), // Don't know how to manage this array
+                      tokenId: parseInt(act.erc1155Metadata[0].tokenId, 16), // Don't know how to manage this array
+                      asset: act.asset,
+                      contractAddress: act.rawContract.address,
+                      id: coingeckoResults[index].id,
+                      image: coingeckoResults[index].image,
+                    });
+                  }
+                }
+              }
+
+              break;
+            case "token":
+            case "internal":
+            case "externe":
+              {
+                //ignore external with 0 value
+                if (act.value != 0) {
+                  //Transfert between addresses of webhook
+                  if (
+                    tx.addresses.includes(act.fromAddress) &&
+                    tx.addresses.includes(act.toAddress)
+                  ) {
+                    assetTransfert.push({
+                      fromAddress: act.fromAddress,
+                      toAddress: act.toAddress,
+                      value: act.value,
+                      asset: act.asset,
+                      contractAddress: act.rawContract.address,
+                      id: coingeckoResults[index].id,
+                      image: coingeckoResults[index].image,
+                    });
+                  } else {
+                    if (tx.addresses.includes(act.fromAddress)) {
+                      // send
+                      assetSent.push({
+                        fromAddress: act.fromAddress,
+                        toAddress: act.toAddress,
+                        value: act.value,
+                        asset: act.asset,
+                        contractAddress: act.rawContract.address,
+                        id: coingeckoResults[index].id,
+                        image: coingeckoResults[index].image,
+                      });
+                    }
+                    if (tx.addresses.includes(act.toAddress)) {
+                      // Received
+                      assetReceived.push({
+                        fromAddress: act.fromAddress,
+                        toAddress: act.toAddress,
+                        value: act.value,
+                        asset: act.asset,
+                        contractAddress: act.rawContract.address,
+                        id: coingeckoResults[index].id,
+                        image: coingeckoResults[index].image,
+                      });
+                    }
+                  }
+                }
+              }
+              break;
+            default:
+              break;
           }
         }
       }
@@ -197,9 +270,12 @@ export class NotificationdStorage {
         createdAt: tx.createdAt,
         type: tx.type,
         network: tx.network,
-        assetSent: assetSent,
-        assetReceived: assetReceived,
-        assetTransfert: assetTransfert,
+        assetSent,
+        assetReceived,
+        assetTransfert,
+        erc1155Sent,
+        erc1155Received,
+        erc1155ransfert,
       });
     }
     return result;

@@ -90,35 +90,102 @@ class Coingecko {
     }
   }
   /**
-   * Retreive id and image from coingecko
+   * Retreive ids and images from coingecko
+   * fetch is done only after checking missing image
    * @param {string} network
-   * @param {string} contractAddress
-   * @param {string} asset use for native token
+   * @param {Array} activity
    * @returns
    */
-  async getIdAndImage(network, contractAddress, asset) {
-    // If there is no contract, it's (i suppose) native token
-    if (!contractAddress) {
-      switch (asset) {
-        case "MATIC": {
-          const id = "matic-network";
-          const image = await this.#getImage(id);
-          return { id, image };
+  async getIdsAndImages(network, activity) {
+    // get all id
+    const allid = activity.map((act) => {
+      if (!act.rawContract.address) {
+        switch (act.asset) {
+          case "MATIC": {
+            const id = "matic-network";
+            //const image = await this.#getImage(id);
+            return id;
+          }
+          case "ETH": {
+            const id = "ethereum";
+            //const image = await this.#getImage(id);
+            return id;
+          }
+          default:
+            return undefined;
         }
-        case "ETH": {
-          const id = "ethereum";
-          const image = await this.#getImage(id);
-          return { id, image };
-        }
-        default:
-          return { id: undefined, image: undefined };
       }
-    }
-    const id = this.#getId(network, contractAddress, asset);
-    if (!id) return { id: undefined, image: undefined };
+      const id = this.#getId(network, act.rawContract.address);
 
-    const image = await this.#getImage(id);
-    return { id, image };
+      return id;
+    });
+    // Get images
+    const result = [];
+    const allIdToFetch = [];
+    allid.forEach((id) => {
+      if (!id) {
+        result.push({ id: undefined, image: undefined });
+        return;
+      }
+      //Findimage
+      const findImage = this.imageUrlData.find((image) => image.id === id);
+      if (
+        !findImage ||
+        Date.now() - findImage.lastFetch > this.#delayFetchNewData
+      ) {
+        //need to fetch
+        result.push({ id, image: "tofetch" });
+        allIdToFetch.push(id);
+      } else {
+        result.push({ id, image: findImage.image });
+      }
+    });
+
+    //Fetch missing image
+    if (allIdToFetch.length != 0) {
+      console.log(
+        "Fetch image Url: " + allIdToFetch.join(",").replace(",,", ",")
+      );
+      const response = await axios.get(
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=" +
+          allIdToFetch.join(",").replace(",,", ",") +
+          "&order=market_cap_desc&per_page=100&page=1&sparkline=false&locale=en",
+        { headers: { accept: "application/json" } }
+      );
+      allIdToFetch.forEach((id, index) => {
+        //Save
+        const indexResponse = response.data.findIndex((coin) => coin.id === id);
+        const ImageUrl = response.data[indexResponse].image;
+        const findImageIndex = this.imageUrlData.findIndex(
+          (image) => image.id === id
+        );
+        if (findImageIndex === -1) {
+          //Add
+          this.imageUrlData = [
+            ...this.imageUrlData,
+            { id, image: ImageUrl, lastFetch: Date.now() },
+          ];
+        } else {
+          //Replace
+          this.imageUrlData[findImageIndex] = {
+            id,
+            image: ImageUrl,
+            lastFetch: Date.now(),
+          };
+        }
+        allIdToFetch[index] = { id, image: ImageUrl };
+      });
+      //push result
+      result.forEach((value, index) => {
+        const findResult = allIdToFetch.find(
+          (fetchResult) => fetchResult.id === value.id
+        );
+        if (findResult) result[index] = findResult;
+      });
+      //write file
+      await fs.writeFile(this.imageUrlFile, JSON.stringify(this.imageUrlData));
+    }
+    return result;
   }
   /**
    * Get coingecko Id
@@ -148,50 +215,6 @@ class Coingecko {
     );
     if (findId) id = findId.id;
     return id;
-  }
-  /**
-   * Get url image from coingecko or Cache data
-   * @param {string} id
-   * @returns {Promise<string>}
-   */
-  async #getImage(id) {
-    //Findimage
-    const findImage = this.imageUrlData.find((image) => image.id === id);
-    if (
-      !findImage ||
-      Date.now() - findImage.lastFetch > this.#delayFetchNewData
-    ) {
-      //fetch
-      console.log("Fetch image Url: " + id);
-      const response = await axios.get(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=" +
-          id +
-          "&order=market_cap_desc&per_page=100&page=1&sparkline=false&locale=en",
-        { headers: { accept: "application/json" } }
-      );
-      //Save
-      const fetchImage = response.data[0].image;
-      if (!findImage) {
-        //Add
-        this.imageUrlData = [
-          ...this.imageUrlData,
-          { id, image: fetchImage, lastFetch: Date.now() },
-        ];
-      } else {
-        //Replace
-        const index = this.imageUrlData.findIndex((image) => (image.id = id));
-        this.imageUrlData[index] = {
-          id,
-          image: fetchImage,
-          lastFetch: Date.now(),
-        };
-      }
-      //write file
-      await fs.writeFile(this.imageUrlFile, JSON.stringify(this.imageUrlData));
-      return fetchImage;
-    } else {
-      return findImage.image;
-    }
   }
 }
 
