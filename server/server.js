@@ -316,7 +316,7 @@ io.on("connection", (socket) => {
   console.log("Client connected " + socket.connectedUser ?? "anonymous");
 
   //on connection check pending notification
-  if (notifications.currentStoreNotifications != 0) {
+  if (notifications.currentStoreNotifications != 0 && socket.connectedUser ) {
     // Wait 2 sec and send
     setTimeout(() => {
       notifications.sendPendingNotifications(socket.connectedUser);
