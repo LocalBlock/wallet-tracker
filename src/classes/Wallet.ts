@@ -68,9 +68,11 @@ export abstract class Wallet {
       localStorage.setItem("Address", JSON.stringify(newData));
     }
   }
-  removeWalletInUserSettings(isConnectedUser:boolean){
-    const userSettingsWallets = getUserSettings().wallets.filter(wallet=>wallet.id!=this.id);
-    updateUserSettings("wallets",userSettingsWallets,isConnectedUser)
+  removeWalletInUserSettings(isConnectedUser: boolean) {
+    const userSettingsWallets = getUserSettings().wallets.filter(
+      (wallet) => wallet.id != this.id
+    );
+    updateUserSettings("wallets", userSettingsWallets, isConnectedUser);
   }
 }
 
@@ -438,16 +440,26 @@ export class AddressWallet extends Wallet {
     // Save in localStorage
     this.updateWallet();
   }
-
-  updateWalletInUserSettings(isConnectedUser:boolean) {
+  /**
+   * Save wallet in userSetting for addressWallet and in server if user is connected
+   * @param isConnectedUser
+   */
+  updateWalletInUserSettings(isConnectedUser: boolean) {
     const userSettingsWallets = getUserSettings().wallets;
-    const userSettingsWalletIndex=userSettingsWallets.findIndex(value=>value.id===this.id)
-    if (userSettingsWalletIndex!=-1){
+    const userSettingsWalletIndex = userSettingsWallets.findIndex(
+      (value) => value.id === this.id
+    );
+    if (userSettingsWalletIndex != -1) {
       //Nothing to do here because a address wallet can be edited
-    }else{
-      userSettingsWallets.push({id:this.id,type:this.type,address:this.address,ens:this.ens})
+    } else {
+      userSettingsWallets.push({
+        id: this.id,
+        type: this.type,
+        address: this.address,
+        ens: this.ens,
+      });
     }
-    updateUserSettings("wallets",userSettingsWallets,isConnectedUser)
+    updateUserSettings("wallets", userSettingsWallets, isConnectedUser);
   }
 
   get trimAddress() {
@@ -553,17 +565,35 @@ export class CustomWallet extends Wallet {
     // Save in localStorage
     this.updateWallet();
   }
-
-  updateWalletInUserSettings(isConnectedUser:boolean) {
+  /**
+   * Save wallet in userSetting for customWallet and in server if user is connected
+   *
+   * For coin save only id and balance
+   * @param isConnectedUser
+   */
+  updateWalletInUserSettings(isConnectedUser: boolean) {
     const userSettingsWallets = getUserSettings().wallets;
-    const userSettingsWalletIndex=userSettingsWallets.findIndex(value=>value.id===this.id)
-    if (userSettingsWalletIndex!=-1){
-      userSettingsWallets[userSettingsWalletIndex].name=this.name
-      userSettingsWallets[userSettingsWalletIndex].coins=this.coins.map(coin=>{return {id:coin.id,balance:coin.balance}})
-    }else{
-      userSettingsWallets.push({id:this.id,type:this.type,name:this.name,coins:this.coins})
+    const userSettingsWalletIndex = userSettingsWallets.findIndex(
+      (value) => value.id === this.id
+    );
+    if (userSettingsWalletIndex != -1) {
+      userSettingsWallets[userSettingsWalletIndex].name = this.name;
+      userSettingsWallets[userSettingsWalletIndex].coins = this.coins.map(
+        (coin) => {
+          return { id: coin.id, balance: coin.balance };
+        }
+      );
+    } else {
+      userSettingsWallets.push({
+        id: this.id,
+        type: this.type,
+        name: this.name,
+        coins: this.coins.map((coin) => {
+          return { id: coin.id, balance: coin.balance };
+        }),
+      });
     }
-    updateUserSettings("wallets",userSettingsWallets,isConnectedUser)
+    updateUserSettings("wallets", userSettingsWallets, isConnectedUser);
   }
   get displayName() {
     return this.name;
