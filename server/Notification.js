@@ -119,7 +119,7 @@ export class NotificationdStorage {
     for await (const [index, tx] of transactions.entries()) {
       //Find user in saved usersData
       let userSettings;
-      let userAddress
+      let userAddress;
       const files = await fs.readdir("data/users");
       for await (const file of files) {
         const userData = JSON.parse(
@@ -127,7 +127,7 @@ export class NotificationdStorage {
         );
         if (userData.webhooks.find((wh) => wh.id === tx.webhookId)) {
           userSettings = userData;
-          userAddress=file.split('.').shift() // name of file without extension
+          userAddress = file.split(".").shift(); // name of file without extension
           break;
         }
       }
@@ -298,6 +298,7 @@ export class NotificationdStorage {
     const pendingUserNotification = this.currentStoreNotifications.filter(
       (notif) => notif.toUser === userId
     );
+    if (pendingUserNotification.length === 0) return; //exit if user have no notifications
     // Send
     for (const pendingNotification of pendingUserNotification) {
       this.#sendNotificationUser(userId, pendingNotification);
