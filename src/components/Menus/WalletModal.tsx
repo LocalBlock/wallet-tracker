@@ -44,7 +44,7 @@ export default function WalletModal({ children, allWallet }: Props) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { setAllWallet } = useContext(AllWalletContext);
   const { setUserSettings } = useContext(UserSettingsContext);
-  const serverStatus = useContext(ServerStatusContext);
+  const { serverStatus } = useContext(ServerStatusContext);
   const toast = useToast();
 
   const handleInputChange = (e: {
@@ -98,6 +98,7 @@ export default function WalletModal({ children, allWallet }: Props) {
   };
 
   const handleSubmit = async () => {
+    const isConnectedUser = serverStatus.connectedUser ? true : false;
     switch (walletType) {
       case "addressWallet":
         {
@@ -128,6 +129,7 @@ export default function WalletModal({ children, allWallet }: Props) {
           const newAddressWallet = new AddressWallet(address, ens);
           // Add in localstorage
           newAddressWallet.addWallet();
+          newAddressWallet.updateWalletInUserSettings(isConnectedUser);
           // Fetch new address
           setIsLoadingText("Fetching Balance");
           await newAddressWallet.fetchBalance(true);
@@ -139,7 +141,7 @@ export default function WalletModal({ children, allWallet }: Props) {
           setAllWallet(getAllWallet()); //SetState from component App and from context
           //First address? add selectedAdds
           if (allWallet.length === 0) {
-            updateUserSettings("selectedWallet", { type: "wallet", index: 0 });
+            updateUserSettings("selectedWallet", { type: "wallet", index: 0 },isConnectedUser);
             setUserSettings(getUserSettings());
           }
           toast({
@@ -155,6 +157,7 @@ export default function WalletModal({ children, allWallet }: Props) {
         {
           const newCustomWallet = new CustomWallet(inputName);
           newCustomWallet.addWallet();
+          newCustomWallet.updateWalletInUserSettings(isConnectedUser);
           setInputName("");
           onClose(); //Close modal
           setAllWallet(getAllWallet()); //SetState from component App and from context
@@ -172,7 +175,11 @@ export default function WalletModal({ children, allWallet }: Props) {
 
   //console.log("Render: AddressModal");
   return (
-    <Button onClick={onOpen} isDisabled={!serverStatus.isApiKey} title={!serverStatus.isApiKey?"No apiKey define !":""}>
+    <Button
+      onClick={onOpen}
+      isDisabled={!serverStatus.isApiKey}
+      title={!serverStatus.isApiKey ? "No apiKey define !" : ""}
+    >
       {children}
       <Modal
         isOpen={isOpen}

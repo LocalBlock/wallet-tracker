@@ -23,7 +23,7 @@ export function updateUserSettings(
   // Better to create a newData object to prevent inference problem (thanks chatGPT)
   const newData = { ...data, [setting]: value };
   localStorage.setItem("userSettings", JSON.stringify(newData));
-  if (newData.web3UserId&&saveToServer) {
+  if (saveToServer) {
     socket.emit("saveUserSettings",newData)
     console.log("[Server] userSettings saved");
   }

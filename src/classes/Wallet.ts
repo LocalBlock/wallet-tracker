@@ -2,6 +2,7 @@ import { getAllTokenBalance, getNativeBalance } from "../functions/Alchemy";
 import { fetchAave } from "../functions/aave";
 import { fetchBeefyData } from "../functions/beefy";
 import { getCoinMarket, getCoinPrices } from "../functions/coingecko";
+import { getUserSettings, updateUserSettings } from "../functions/localstorage";
 import { getCoinID } from "../functions/utils";
 
 import { appSettings } from "../settings/appSettings";
@@ -16,7 +17,7 @@ import { Coin } from "./Coin";
 import { Token } from "./Token";
 
 export abstract class Wallet {
-  readonly id: string;
+  id: string;
   readonly type: "AddressWallet" | "CustomWallet" | "Web3Wallet";
 
   constructor(
@@ -66,6 +67,10 @@ export abstract class Wallet {
       const newData = data.filter((element) => element.id != this.id);
       localStorage.setItem("Address", JSON.stringify(newData));
     }
+  }
+  removeWalletInUserSettings(isConnectedUser:boolean){
+    const userSettingsWallets = getUserSettings().wallets.filter(wallet=>wallet.id!=this.id);
+    updateUserSettings("wallets",userSettingsWallets,isConnectedUser)
   }
 }
 
@@ -434,6 +439,17 @@ export class AddressWallet extends Wallet {
     this.updateWallet();
   }
 
+  updateWalletInUserSettings(isConnectedUser:boolean) {
+    const userSettingsWallets = getUserSettings().wallets;
+    const userSettingsWalletIndex=userSettingsWallets.findIndex(value=>value.id===this.id)
+    if (userSettingsWalletIndex!=-1){
+      //Nothing to do here because a address wallet can be edited
+    }else{
+      userSettingsWallets.push({id:this.id,type:this.type,address:this.address,ens:this.ens})
+    }
+    updateUserSettings("wallets",userSettingsWallets,isConnectedUser)
+  }
+
   get trimAddress() {
     return this.address.slice(0, 6) + "..." + this.address.slice(-4);
   }
@@ -536,6 +552,18 @@ export class CustomWallet extends Wallet {
     this.lastFetchPrices = Date.now();
     // Save in localStorage
     this.updateWallet();
+  }
+
+  updateWalletInUserSettings(isConnectedUser:boolean) {
+    const userSettingsWallets = getUserSettings().wallets;
+    const userSettingsWalletIndex=userSettingsWallets.findIndex(value=>value.id===this.id)
+    if (userSettingsWalletIndex!=-1){
+      userSettingsWallets[userSettingsWalletIndex].name=this.name
+      userSettingsWallets[userSettingsWalletIndex].coins=this.coins.map(coin=>{return {id:coin.id,balance:coin.balance}})
+    }else{
+      userSettingsWallets.push({id:this.id,type:this.type,name:this.name,coins:this.coins})
+    }
+    updateUserSettings("wallets",userSettingsWallets,isConnectedUser)
   }
   get displayName() {
     return this.name;

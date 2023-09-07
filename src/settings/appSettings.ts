@@ -103,8 +103,8 @@ export const appSettings: appSettingsType = {
     groups: [],
     selectedChain: ["ethereum", "polygon-pos"],
     selectedWallet: { type: "wallet", index: 0 },
-    web3UserId:"",
     webhooks:[],
-    notificationsEnable:false
+    notificationsEnable:false,
+    wallets:[]
   },
 };

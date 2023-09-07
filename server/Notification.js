@@ -119,21 +119,22 @@ export class NotificationdStorage {
     for await (const [index, tx] of transactions.entries()) {
       //Find user in saved usersData
       let userSettings;
+      let userAddress
       const files = await fs.readdir("data/users");
       for await (const file of files) {
-        //const fileName=path.parse("data/users/" + file).name
         const userData = JSON.parse(
           await fs.readFile(`data/users/${file}`, "utf8")
         );
         if (userData.webhooks.find((wh) => wh.id === tx.webhookId)) {
           userSettings = userData;
+          userAddress=file.split('.').shift() // name of file without extension
           break;
         }
       }
       if (userSettings) {
         const newData = {
           ...tx,
-          ["toUser"]: userSettings.web3UserId,
+          ["toUser"]: userAddress,
           ["addresses"]: userSettings.webhooks
             .find((wh) => wh.id === tx.webhookId)
             .addresses.map((address) => address.toLowerCase()),
@@ -321,7 +322,7 @@ export class NotificationdStorage {
     let isEmit = false;
     // Fetch all connected sockets to find user and send message
     for (let [, socket] of this.io.of("/").sockets) {
-      if (socket.web3UserId === userId) {
+      if (socket.connectedUser === userId) {
         socket.emit("notification", JSON.stringify(message));
         isEmit = true;
       }

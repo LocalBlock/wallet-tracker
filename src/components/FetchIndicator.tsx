@@ -17,7 +17,7 @@ import { convertFetchTime } from "../functions/utils";
 
 export default function FetchIndicator() {
   const { allWallet, setAllWallet } = useContext(AllWalletContext);
-  const serverStatus = useContext(ServerStatusContext);
+  const { serverStatus } = useContext(ServerStatusContext);
 
   const [fetchStatus, setFetchStatus] = useState<
     "fetching" | "fail" | "success" | undefined

@@ -9,6 +9,10 @@ import { Server } from "socket.io";
 import { promises as fs } from "fs";
 import dotenv from "dotenv";
 import { NotificationdStorage } from "./Notification.js";
+import { SiweErrorType, generateNonce, SiweMessage } from "siwe";
+import session from "express-session";
+import fileStore from "session-file-store";
+const FileStoreStore = fileStore(session);
 
 // Get environment variable in developpement mode
 if (process.env.NODE_ENV != "production")
@@ -21,6 +25,7 @@ const appDirName = "/app";
 const PORT = 3000;
 const APIKEY = process.env.VITE_ALCHEMY_APIKEY;
 const AUTHTOKEN = process.env.VITE_ALCHEMY_AUTHTOKEN;
+const PROJECTID = process.env.VITE_WALLETCONNECT_PROJECTID;
 
 // Initialise data directory
 try {
@@ -30,7 +35,8 @@ try {
   console.log(error);
 }
 
-console.log("Alchemy:", "APIKEY=" + APIKEY, "AUTHTOKEN=" + AUTHTOKEN);
+console.log("Alchemy :", "APIKEY=" + APIKEY, "AUTHTOKEN=" + AUTHTOKEN);
+console.log("WalletConnnet :", "ProjetId=" + PROJECTID);
 
 // Express server with the appropriate routes for our webhook and web requests
 const app = express()
@@ -45,7 +51,27 @@ const app = express()
       credentials: true,
     })
   )
-
+  .use(
+    session({
+      name: "siwe",
+      secret: "super secret",
+      resave: true,
+      saveUninitialized: true,
+      store: new FileStoreStore({ path: "data/sessions" }),
+      cookie: {
+        httpOnly: true,
+        maxAge: 60 * 24 * 60 * 60 * 1000, // 60 days
+        secure: process.env.NODE_ENV === "production",
+      },
+    })
+  )
+  .get("/status", (req, res) => {
+    res.status(200).json({
+      isApiKey: APIKEY ? true : false,
+      isAuthToken: AUTHTOKEN ? true : false,
+      projectId: PROJECTID,
+    });
+  })
   //Proxy backend for alchemy, why? to hide APIKEY, no sensitive information in front end
   .post("/alchemyfetch", (req, res) => {
     //rewrite url
@@ -168,6 +194,91 @@ const app = express()
     res.status(200).end();
   })
 
+  // Sign in ethereum
+  .get("/siwe/nonce", async (req, res) => {
+    req.session.nonce = generateNonce();
+    req.session.save(() => res.status(200).send(req.session.nonce).end());
+  })
+  .get("/siwe/me", async (req, res) => {
+    if (!req.session.siwe) {
+      res.status(200).json({ address: "" });
+      return;
+    }
+    res
+      .status(200)
+      .json({
+        //text: getText(req.session.siwe.address),
+        address: req.session.siwe.address,
+        //ens: req.session.ens,
+      })
+      .end();
+  })
+  // Verify siwe, log in, and send userSettings
+  .post("/siwe/verify", async (req, res) => {
+    if (!req.body.message) {
+      res.status(422).json({ message: "Expected signMessage object as body." });
+      return;
+    }
+    try {
+      const { message, signature } = req.body;
+      //Create siweMessage from request
+      const siweMessage = new SiweMessage(message);
+      // Verify signature
+      const { data: fields } = await siweMessage.verify({
+        signature,
+        nonce: req.session.nonce,
+      });
+      req.session.siwe = fields;
+      req.session.save();
+      //Check if user settings exist and send to response
+      try {
+        const userSettings = await fs.readFile(
+          `data/users/${fields.address}.json`,
+          {
+            encoding: "utf8",
+          }
+        );
+        res.json({ userSettings: JSON.parse(userSettings) });
+      } catch (error) {
+        //file not exist
+        res.json({ userSettings: undefined });
+      }
+    } catch (error) {
+      req.session.siwe = null;
+      req.session.nonce = null;
+      console.log(error);
+      switch (error) {
+        case SiweErrorType.EXPIRED_MESSAGE: {
+          req.session.save(() =>
+            res.status(440).json({ message: error.message })
+          );
+          break;
+        }
+        case SiweErrorType.INVALID_SIGNATURE: {
+          req.session.save(() =>
+            res.status(422).json({ message: error.message })
+          );
+          break;
+        }
+        default: {
+          req.session.save(() =>
+            res.status(500).json({ message: error.message })
+          );
+          break;
+        }
+      }
+    }
+  })
+  .get("/siwe/logout", async (req, res) => {
+    if (!req.session.siwe) {
+      res.status(401).json({ message: "You have to first sign_in" });
+      return;
+    }
+    console.log("Logout " + req.session.siwe.address);
+    req.session.destroy(() => {
+      res.clearCookie("siwe").status(205).send();
+    });
+  })
   // Remaining gets go to index.html
   .get("/*", (req, res) =>
     res.sendFile(path.join(__dirname, appDirName, "/index.html"))
@@ -192,65 +303,48 @@ console.log(
 
 // Middleware for Auth
 io.use((socket, next) => {
-  const web3UserId = socket.handshake.auth.web3UserId;
-  if (web3UserId) {
+  const connectedUser = socket.handshake.auth.connectedUser;
+  if (connectedUser) {
     // Existing User
-    socket.web3UserId = web3UserId;
+    socket.connectedUser = connectedUser;
   }
   next();
 });
 
 // listen for client connections/calls on the WebSocket server
 io.on("connection", (socket) => {
-  console.log("Client connected " + socket.web3UserId ?? "anonymous");
-  //on connection emit status server
-  socket.emit(
-    "status",
-    JSON.stringify({
-      isApiKey: APIKEY ? true : false,
-      isAuthToken: AUTHTOKEN ? true : false,
-    })
-  );
+  console.log("Client connected " + socket.connectedUser ?? "anonymous");
 
   //on connection check pending notification
   if (notifications.currentStoreNotifications != 0) {
     // Wait 2 sec and send
     setTimeout(() => {
-      notifications.sendPendingNotifications(socket.web3UserId);
+      notifications.sendPendingNotifications(socket.connectedUser);
       clearTimeout;
     }, 2000);
   }
 
   socket.on("disconnect", () =>
-    console.log("Client disconnected " + socket.web3UserId ?? "anonymous")
+    console.log("Client disconnected " + socket.connectedUser ?? "anonymous")
   );
 
   socket.on("saveUserSettings", async (userSettings) => {
     try {
       // Save usersettings In file
       await fs.writeFile(
-        `data/users/${userSettings.web3UserId}.json`,
+        `data/users/${socket.connectedUser}.json`,
         JSON.stringify(userSettings)
       );
-      // Save Web3UserId on current socket
-      socket.web3UserId = userSettings.web3UserId;
-      console.log("Settings of " + userSettings.web3UserId + " saved");
+      console.log("Settings of " + socket.connectedUser + " saved");
     } catch (error) {
       socket.emit("error", error.message);
       console.log(error);
     }
   });
 
-  socket.on("loadUserSettings", async (web3UserIdClient) => {
-    try {
-      const data = await fs.readFile(`data/users/${web3UserIdClient}.json`, {
-        encoding: "utf8",
-      });
-      socket.emit("userSettings", JSON.parse(data));
-    } catch (error) {
-      socket.emit("error", error.message);
-      console.log(error);
-    }
+  // Add connectedUser on current socket, use when initialy the current socket is not attach to a user
+  socket.on("updateSocketAuth", (connectedUser) => {
+    socket.connectedUser = connectedUser;
   });
 });
 

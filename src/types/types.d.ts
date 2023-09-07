@@ -1,6 +1,7 @@
 import { Network } from "alchemy-sdk";
-import { Wallet } from "../classes/Wallet";
+import { AddressWallet, CustomWallet, Wallet } from "../classes/Wallet";
 import { WebhookWithAddresses } from "../components/WebhooksSetting";
+import { Coin } from "../classes/Coin";
 
 export interface aaveBalance {
   /**Valeur total sur le protocol */
@@ -137,9 +138,16 @@ export interface userSettings {
     name: string;
     wallets: Wallet["id"][];
   }[];
-  web3UserId: string;
   webhooks: WebhookWithAddresses[];
   notificationsEnable: boolean;
+  wallets:{
+    id:Wallet["id"]
+    type:Wallet["type"]
+    address?:AddressWallet["address"]
+    ens?:AddressWallet["ens"]
+    name?: CustomWallet["name"]
+    coins?:{id:Coin["id"],balance: Coin["balance"]}[]
+  }[]
 }
 
 /** Application settings */

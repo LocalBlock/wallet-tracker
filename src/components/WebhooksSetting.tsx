@@ -103,7 +103,7 @@ function addOrRemoveAddressesArray(
 }
 
 export default function WebhooksSettings() {
-  const serverStatus = useContext(ServerStatusContext);
+  const { serverStatus } = useContext(ServerStatusContext);
   const { allWallet } = useContext(AllWalletContext);
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
   const toast = useToast();
@@ -137,7 +137,7 @@ export default function WebhooksSettings() {
     const isConfigurable =
       serverStatus.isConnected &&
       serverStatus.isAuthToken &&
-      userSettings.web3UserId &&
+      serverStatus.connectedUser &&
       isValidUrl(window.location.hostname)
         ? true
         : false;
@@ -145,11 +145,11 @@ export default function WebhooksSettings() {
     let reason = "";
     if (!serverStatus.isConnected) reason = "not connected to server, ";
     if (!serverStatus.isAuthToken) reason = reason + "missing auth token, ";
-    if (!userSettings.web3UserId) reason = reason + "missing web3id, ";
+    if (!serverStatus.connectedUser) reason = reason + "no user connected, ";
     if (!isValidUrl(window.location.hostname))
       reason = reason + "url is invalid (local), ";
-    
-      return {
+
+    return {
       isConfigurable: isConfigurable,
       reason: reason.charAt(0).toUpperCase() + reason.substring(1).slice(0, -2), // Capitalize first character and remove 2 last character ', '
     };

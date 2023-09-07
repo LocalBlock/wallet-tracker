@@ -141,7 +141,7 @@ export default function AddCoinForm({ onAddCoin, coinlist }: Props) {
     console.log("useEffect search");
     let timeoutID: number;
     if (inputValue.length > 2) {
-      timeoutID = setTimeout(async () => {
+      timeoutID = window.setTimeout(async () => {
         console.log("Search : " + inputValue);
         const result = await search(inputValue);
         setSuggestions(result.coins);

@@ -34,6 +34,7 @@ import AddCoinForm, { AddCoin } from "./AddCoinForm";
 import { CustomWallet } from "../../classes/Wallet";
 import { Coin } from "../../classes/Coin";
 import { getAllWallet } from "../../functions/localstorage";
+import { ServerStatusContext } from "../../contexts/ServerStatusContext";
 
 interface EditCustomWalletProps {
   walletId: string;
@@ -43,6 +44,8 @@ export default function EditCustomWallet({
   walletId,
 }: EditCustomWalletProps) {
   const { allWallet,setAllWallet } = useContext(AllWalletContext);
+  const {serverStatus}=useContext(ServerStatusContext)
+  const isConnectedUser=serverStatus.connectedUser?true:false
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const currentWallet = allWallet.find(
@@ -53,8 +56,8 @@ export default function EditCustomWallet({
 
 
   const handleSubmit = async() => {
-    console.log(currentWallet.coins,coinList)
     currentWallet.coins=coinList
+    currentWallet.updateWalletInUserSettings(isConnectedUser)
     await currentWallet.fetchData(true)
     //currentWallet.updateWallet()
     setCoinlist([...currentWallet.coins])

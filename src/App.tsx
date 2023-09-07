@@ -6,10 +6,11 @@ import { ServerStatusContext } from "./contexts/ServerStatusContext";
 import { getAllWallet, getUserSettings } from "./functions/localstorage";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { ChakraProvider, ColorModeScript, useToast } from "@chakra-ui/react";
-import { userSettings } from "./types/types";
 import Layout from "./pages/Layout";
 import { checkUserSettings } from "./functions/utils";
 import theme from "./theme/theme";
+import { WagmiConfig } from "wagmi";
+import { setMyWagmiConfig } from "./wagmiConfig";
 
 // ROUTER DEFENITION
 //Lazy-loading with dynamic import()
@@ -35,8 +36,6 @@ const router = createBrowserRouter([
   {
     path: "/",
     id: "root",
-    //loader: loaderSettings, // Cancel feature
-    //shouldRevalidate: () => false, // Prevent call of loader, When navigating to the same URL as the current URL
     element: <Layout socket={socket} />,
     children: [
       { index: true, element: <HomePage /> },
@@ -50,6 +49,15 @@ const router = createBrowserRouter([
 ]);
 // END ROUTER DEFENITION
 
+// Get server status
+const { isApiKey, isAuthToken, projectId } = await fetch("/status").then(
+  (res) =>
+    res.json() as Promise<{ isApiKey: boolean; isAuthToken: boolean; projectId: string }>
+);
+
+//Set myWagmiConfig
+const myWagmiConfig=setMyWagmiConfig(projectId)
+
 // Check currentsettings
 checkUserSettings(getUserSettings());
 
@@ -61,9 +69,13 @@ export default function App() {
 
   //Websocket server states
   const [serverStatus, setServerStatus] = useState({
-    isApiKey: false,
-    isAuthToken: false,
-    isConnected:socket.connected
+    isApiKey,
+    isAuthToken,
+    isConnected: socket.connected,
+    connectedUser: socket.auth
+      ? (Object.getOwnPropertyDescriptor(socket.auth, "connectedUser")
+          ?.value as string)
+      : "",
   });
 
   // Synchronize with websocket server
@@ -71,24 +83,16 @@ export default function App() {
     console.log("useEffect WebSocket");
     function onConnect() {
       console.log("[Server] Connected to websocket server");
-      setServerStatus((previousStatus)=>{
-        return {...previousStatus,["isConnected"]:true}
-      })
+      setServerStatus((previousStatus) => {
+        return { ...previousStatus, ["isConnected"]: true };
+      });
     }
 
     function onDisconnect() {
       console.log("[Server] Disconnected from websocket server");
-      setServerStatus((previousStatus)=>{
-        return {...previousStatus,["isConnected"]:false}
-      })
-    }
-    function onCheckServer(value: string) {
-      console.log("[Server] Status received");
-      const data=JSON.parse(value) as {isApiKey:boolean,isAuthToken:boolean}
-      setServerStatus((previousStatus)=>{
-        return {...previousStatus,["isApiKey"]:data.isApiKey,["isAuthToken"]:data.isAuthToken}
-      })
-
+      setServerStatus((previousStatus) => {
+        return { ...previousStatus, ["isConnected"]: false };
+      });
     }
 
     function onError(value: string) {
@@ -98,31 +102,17 @@ export default function App() {
         status: "error",
       });
     }
-
-    function onUsersettings(data: userSettings) {
-      localStorage.setItem("userSettings", JSON.stringify(data));
-      setUserSettings(getUserSettings());
-      toast({
-        title: "Settings",
-        description: "Setting loaded",
-        status: "success",
-      });
-    }
-
-
-
+    // Set websocket listener
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-    socket.on("status", onCheckServer);
     socket.on("error", onError);
-    socket.on("userSettings", onUsersettings);
 
+    // Cleanup listener
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
-      socket.off("status", onCheckServer);
       socket.off("error", onError);
-      socket.off("userSettings", onUsersettings);
+
     };
   }, [toast]);
 
@@ -132,13 +122,17 @@ export default function App() {
       {/** Providers  */}
       <AllWalletContext.Provider value={{ allWallet, setAllWallet }}>
         <UserSettingsContext.Provider value={{ userSettings, setUserSettings }}>
-          <ServerStatusContext.Provider value={serverStatus}>
-            <ChakraProvider theme={theme}>
-              <ColorModeScript
-                initialColorMode={theme.config.initialColorMode}
-              />
-              <RouterProvider router={router} />
-            </ChakraProvider>
+          <ServerStatusContext.Provider
+            value={{ serverStatus, setServerStatus }}
+          >
+            <WagmiConfig config={myWagmiConfig}>
+              <ChakraProvider theme={theme}>
+                <ColorModeScript
+                  initialColorMode={theme.config.initialColorMode}
+                />
+                <RouterProvider router={router} />
+              </ChakraProvider>
+            </WagmiConfig>
           </ServerStatusContext.Provider>
         </UserSettingsContext.Provider>
       </AllWalletContext.Provider>

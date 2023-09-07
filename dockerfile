@@ -1,6 +1,6 @@
 # Build stage
 # Build app with vite
-FROM node:alpine AS build
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ COPY . .
 RUN yarn build
 
 # Build server
-FROM node:alpine
+FROM node:18-alpine
 WORKDIR /srv
 
 # Install server app dependencies (production)

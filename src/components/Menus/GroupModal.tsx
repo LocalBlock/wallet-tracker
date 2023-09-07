@@ -26,6 +26,7 @@ import { updateUserSettings } from "../../functions/localstorage";
 import { getUserSettings } from "../../functions/localstorage";
 import { faEdit } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ServerStatusContext } from "../../contexts/ServerStatusContext";
 
 interface GroupModalProps {
   action: "Edit" | "Add";
@@ -40,7 +41,7 @@ export default function GroupModal({
 }: GroupModalProps) {
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
   const { allWallet } = useContext(AllWalletContext);
-
+  const { serverStatus } = useContext(ServerStatusContext);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [groupName, setGroupName] = useState(
     groupNameEdit ? groupNameEdit : ""
@@ -87,6 +88,7 @@ export default function GroupModal({
   };
   /** Update or Add group */
   const handleSubmit = () => {
+    const isConnectedUser = serverStatus.connectedUser ? true : false;
     //Update on localstorage
     const lsGroups = userSettings.groups;
     const index = lsGroups.findIndex(
@@ -100,7 +102,7 @@ export default function GroupModal({
       //New group
       lsGroups.push({ name: groupName, wallets: selectedWallets });
     }
-    updateUserSettings("groups", lsGroups);
+    updateUserSettings("groups", lsGroups, isConnectedUser);
     // Update state from localstorage
     setUserSettings(getUserSettings());
     onClose(); // Close modal

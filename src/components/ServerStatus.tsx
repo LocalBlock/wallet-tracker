@@ -3,7 +3,7 @@ import { Alert, AlertIcon } from "@chakra-ui/react";
 import { ServerStatusContext } from "../contexts/ServerStatusContext";
 
 export default function ServerStatus() {
-  const serverStatus = useContext(ServerStatusContext);
+  const { serverStatus } = useContext(ServerStatusContext);
 
   let message = "";
   if (serverStatus.isConnected) {

@@ -24,6 +24,7 @@ import { AllWalletContext } from "../../contexts/AllWalletContext";
 import { AddressWallet, Web3Wallet } from "../../classes/Wallet";
 import { addAndRemoveAddresses, deleteWebhook } from "../../functions/Alchemy";
 import { socket } from "../../socket";
+import { ServerStatusContext } from "../../contexts/ServerStatusContext";
 
 interface ModalRemoveProps {
   alertHeader: string;
@@ -41,6 +42,8 @@ export default function ModalRemove({
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
+  const { serverStatus } = useContext(ServerStatusContext);
+  const isConnectedUser=serverStatus.connectedUser?true:false
   const { allWallet, setAllWallet } = useContext(AllWalletContext);
 
   const handleRemove = async () => {
@@ -160,14 +163,14 @@ export default function ModalRemove({
           updateUserSettings("webhooks", newWebhooksUserSetting, false);
         }
       }
-
+      allWallet[removeWalletIndex].removeWalletInUserSettings(false)
       allWallet[removeWalletIndex].removeWallet(); // Remove wallet on local storage
       updateUserSettings("groups", lsGroups, false); // Update userSettings on localstorage
       setAllWallet(getAllWallet()); // Set state allAddress with new data from localstorage
     }
     // Save to server
     const settingsUpdated = getUserSettings();
-    socket.emit("saveUserSettings", settingsUpdated);
+    isConnectedUser&&socket.emit("saveUserSettings", settingsUpdated);
     console.log("[Server] userSettings saved");
     setUserSettings(settingsUpdated); // Set state userSettings with new data from localstorage
     onClose(); //Close modal

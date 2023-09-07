@@ -1,7 +1,14 @@
-import { SocketOptions, io } from 'socket.io-client';
-import { getUserSettings } from './functions/localstorage';
+import { SocketOptions, io } from "socket.io-client";
 
-const web3UserId= getUserSettings().web3UserId
-const options:SocketOptions=web3UserId?{auth:{web3UserId}}:{}
+let connectedUser = "";
+try {
+  const res = await fetch("/siwe/me");
+  const json = await res.json();
+  connectedUser = json.address;
+} catch (error) {
+  console.log(error);
+}
+
+const options: SocketOptions = connectedUser ? { auth: { connectedUser } } : {};
 // Connect to websocket server on localhost
-export const socket = io("",options);
+export const socket = io("", options);
