@@ -454,7 +454,8 @@ export function checkUserSettings(currentUserSettings: userSettings) {
       // Add missing key in user config
       updateUserSettings(
         key as keyof userSettings,
-        appSettings.defaultUserSettings[key as keyof userSettings]
+        appSettings.defaultUserSettings[key as keyof userSettings],
+        false
       );
       console.log("[Settings] : Add new setting", key);
     }
