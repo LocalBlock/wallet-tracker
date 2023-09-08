@@ -1,6 +1,7 @@
 import axios from "axios";
 import { promises as fs } from "fs";
 import path from "path";
+import { displayDate } from "./utils.js";
 /**
  * Manage data from coingecko.
  * Make cache data for coinlist and imageURl in JSON files.
@@ -41,7 +42,7 @@ class Coingecko {
         await fs.writeFile(coinlistFile, "{}");
         await fs.writeFile(imageUrlFile, "[]");
       } catch (error) {
-        console.log(error);
+        console.log(displayDate(), error);
       }
     }
 
@@ -86,7 +87,7 @@ class Coingecko {
         delayFetchNewData
       );
     } catch (error) {
-      console.log(error);
+      console.log(displayDate(), error);
     }
   }
   /**
@@ -144,6 +145,7 @@ class Coingecko {
     //Fetch missing image
     if (allIdToFetch.length != 0) {
       console.log(
+        displayDate(),
         "Fetch image Url: " + allIdToFetch.join(",").replace(",,", ",")
       );
       const response = await axios.get(

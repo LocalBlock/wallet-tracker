@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import { coingecko } from "./Coingecko.js";
 import path from "path";
+import { displayDate } from "./utils.js";
 
 export class NotificationdStorage {
   #delayWebhook = 3000;
@@ -26,7 +27,7 @@ export class NotificationdStorage {
       });
       return new NotificationdStorage(io, file, JSON.parse(data));
     } catch (error) {
-      console.log(error);
+      console.log(displayDate(), error);
     }
   }
   /**
@@ -68,17 +69,23 @@ export class NotificationdStorage {
           notif.erc1155ransfert.length === 0
         ) {
           console.log(
-            "[Incoming Notification] : A notification is ignore because no activity was detected. (Approuve transaction?)"
+            displayDate(),
+            "(Incoming Notification) : A notification is ignore because no activity was detected. (Approuve transaction?)"
           );
         } else {
           // Send notification or save if user not connected
           if (!this.#sendNotificationUser(notif.toUser, notif))
             await this.#saveNotification(notif);
-          else console.log("[Incoming Notification] : Sent to " + notif.toUser);
+          else
+            console.log(
+              displayDate(),
+              "[Incoming Notification] : Sent to " + notif.toUser
+            );
         }
       } else
         console.log(
-          '[Incoming Notification] : A notification is ignore because no user was found for webhookId "' +
+          displayDate(),
+          '(Incoming Notification) : A notification is ignore because no user was found for webhookId "' +
             notif.webhookId +
             '"'
         );
@@ -290,7 +297,7 @@ export class NotificationdStorage {
       this.notificationsPath,
       JSON.stringify(this.currentStoreNotifications)
     );
-    console.log("[Incoming Notification] : Notification saved");
+    console.log(displayDate(), "(Incoming Notification) : Notification saved");
   }
 
   async sendPendingNotifications(userId) {
@@ -314,9 +321,9 @@ export class NotificationdStorage {
         JSON.stringify(this.currentStoreNotifications)
       );
     } catch (error) {
-      console.log(error);
+      console.log(displayDate(), error);
     }
-    console.log("[Pending Notifications] : Sent to " + userId);
+    console.log(displayDate(), "(Pending Notifications) : Sent to " + userId);
   }
 
   #sendNotificationUser(userId, message) {
@@ -347,7 +354,7 @@ export class NotificationdStorage {
         JSON.stringify([...log, ...notifications])
       );
     } catch (error) {
-      console.log(error);
+      console.log(displayDate(), error);
     }
   }
 }

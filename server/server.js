@@ -13,6 +13,7 @@ import { SiweErrorType, generateNonce, SiweMessage } from "siwe";
 import session from "express-session";
 import fileStore from "session-file-store";
 const FileStoreStore = fileStore(session);
+import { displayDate } from "./utils.js";
 
 // Get environment variable in developpement mode
 if (process.env.NODE_ENV != "production")
@@ -35,8 +36,10 @@ try {
   console.log(error);
 }
 
+console.log("Server starting...");
+console.log("Environment variables");
 console.log("Alchemy :", "APIKEY=" + APIKEY, "AUTHTOKEN=" + AUTHTOKEN);
-console.log("WalletConnnet :", "ProjetId=" + PROJECTID);
+console.log("WalletConnnet :", "PROJECTID=" + PROJECTID);
 
 // Express server with the appropriate routes for our webhook and web requests
 const app = express()
@@ -96,8 +99,8 @@ const app = express()
         if (error.response) {
           // la requête a été faite et le code de réponse du serveur n’est pas dans
           // la plage 2xx
-          console.log(error.response.data);
-          console.log(error.response.status);
+          console.log(displayDate(), error.response.data);
+          console.log(displayDate(), error.response.status);
           //console.log(error.response.headers);
           res
             .status(error.response.status)
@@ -107,12 +110,12 @@ const app = express()
           // la requête a été faite mais aucune réponse n’a été reçue
           // `error.request` est une instance de XMLHttpRequest dans le navigateur
           // et une instance de http.ClientRequest avec node.js
-          console.log("Request", error.request);
+          console.log(displayDate(), "Request", error.request);
           res.status(500).send("Error on request");
         } else {
           // quelque chose s’est passé lors de la construction de la requête et cela
           // a provoqué une erreur
-          console.log("Error", error.message);
+          console.log(displayDate(), "Error", error.message);
         }
       });
   })
@@ -120,7 +123,7 @@ const app = express()
   //Proxy backend for alchemy webhook
   .all("/alchemynotify*", (req, res) => {
     if (!AUTHTOKEN) {
-      console.log("No AuthToken");
+      console.log(displayDate(), "No AuthToken");
       res.status(401).json({
         message: "Unauthenticated request.",
         name: "AuthError",
@@ -141,7 +144,10 @@ const app = express()
           url = `https://dashboard.alchemy.com/api${req.params[0]}?webhook_id=${req.query.webhook_id}`;
           break;
         default:
-          console.log(`Param ${req.params[0]} in request are unkown`);
+          console.log(
+            displayDate(),
+            `Param ${req.params[0]} in request are unkown`
+          );
           break;
       }
       const options = {
@@ -165,8 +171,8 @@ const app = express()
           if (error.response) {
             // la requête a été faite et le code de réponse du serveur n’est pas dans
             // la plage 2xx
-            console.log(error.response.data);
-            console.log(error.response.status);
+            console.log(displayDate(), error.response.data);
+            console.log(displayDate(), error.response.status);
             //console.log(error.response.headers);
             res
               .status(error.response.status)
@@ -176,13 +182,13 @@ const app = express()
             // la requête a été faite mais aucune réponse n’a été reçue
             // `error.request` est une instance de XMLHttpRequest dans le navigateur
             // et une instance de http.ClientRequest avec node.js
-            console.log(error.request);
+            console.log(displayDate(), error.request);
             res.status(500).send("Error on request");
           } else {
             // quelque chose s’est passé lors de la construction de la requête et cela
             // a provoqué une erreur
             res.status(500).send(error.message);
-            console.log("Error", error.message);
+            console.log(displayDate(), "Error", error.message);
           }
         });
     }
@@ -246,7 +252,7 @@ const app = express()
     } catch (error) {
       req.session.siwe = null;
       req.session.nonce = null;
-      console.log(error);
+      console.log(displayDate(), error);
       switch (error) {
         case SiweErrorType.EXPIRED_MESSAGE: {
           req.session.save(() =>
@@ -274,7 +280,7 @@ const app = express()
       res.status(401).json({ message: "You have to first sign_in" });
       return;
     }
-    console.log("Logout " + req.session.siwe.address);
+    console.log(displayDate(), "Logout " + req.session.siwe.address);
     req.session.destroy(() => {
       res.clearCookie("siwe").status(205).send();
     });
@@ -313,10 +319,13 @@ io.use((socket, next) => {
 
 // listen for client connections/calls on the WebSocket server
 io.on("connection", (socket) => {
-  console.log("Client connected " + socket.connectedUser ?? "anonymous");
+  console.log(
+    displayDate(),
+    "Client connected : " + (socket.connectedUser ?? "anonymous")
+  );
 
   //on connection check pending notification
-  if (notifications.currentStoreNotifications != 0 && socket.connectedUser ) {
+  if (notifications.currentStoreNotifications != 0 && socket.connectedUser) {
     // Wait 2 sec and send
     setTimeout(() => {
       notifications.sendPendingNotifications(socket.connectedUser);
@@ -325,7 +334,10 @@ io.on("connection", (socket) => {
   }
 
   socket.on("disconnect", () =>
-    console.log("Client disconnected " + socket.connectedUser ?? "anonymous")
+    console.log(
+      displayDate(),
+      "Client disconnected : " + (socket.connectedUser ?? "anonymous")
+    )
   );
 
   socket.on("saveUserSettings", async (userSettings) => {
@@ -335,10 +347,13 @@ io.on("connection", (socket) => {
         `data/users/${socket.connectedUser}.json`,
         JSON.stringify(userSettings)
       );
-      console.log("Settings of " + socket.connectedUser + " saved");
+      console.log(
+        displayDate(),
+        "Settings of " + socket.connectedUser + " saved"
+      );
     } catch (error) {
       socket.emit("error", error.message);
-      console.log(error);
+      console.log(displayDate(), error);
     }
   });
 
@@ -350,6 +365,6 @@ io.on("connection", (socket) => {
 
 // notification received from Alchemy from the webhook. Let the clients know.
 async function notificationReceived(req) {
-  console.log("Notification received!");
+  console.log(displayDate(), "Notification received!");
   notifications.newNotification(req.body);
 }
