@@ -21,10 +21,9 @@ import { appSettings } from "../../settings/appSettings";
 import { ServerStatusContext } from "../../contexts/ServerStatusContext";
 
 export default function SettingsMenu() {
-
   const { userSettings, setUserSettings } = useContext(UserSettingsContext);
-  const {serverStatus}=useContext(ServerStatusContext)
-  const isConnectedUser=serverStatus.connectedUser?true:false
+  const { serverStatus } = useContext(ServerStatusContext);
+  const isConnectedUser = serverStatus.connectedUser ? true : false;
   const { colorMode, toggleColorMode } = useColorMode();
 
   return (
@@ -35,9 +34,10 @@ export default function SettingsMenu() {
         <MenuItem as={Box} justifyContent={"space-between"}>
           Currency :
           <Select
+            name="currency"
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => {
-              updateUserSettings("currency", e.target.value,isConnectedUser);
+              updateUserSettings("currency", e.target.value, isConnectedUser);
               setUserSettings(getUserSettings());
             }}
             size={"sm"}
@@ -54,6 +54,7 @@ export default function SettingsMenu() {
         <MenuItem as={Box} justifyContent={"space-between"}>
           Dark mode :
           <Switch
+            name="Dark mode"
             onChange={toggleColorMode}
             isChecked={colorMode === "dark" ? true : false}
           />

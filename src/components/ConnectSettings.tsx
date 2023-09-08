@@ -15,6 +15,8 @@ import {
   VStack,
   FormHelperText,
   ButtonGroup,
+  Text,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 import {
   useAccount,
@@ -98,7 +100,7 @@ export default function ConnectSetting() {
       });
 
       if (!verifyRes.ok) throw new Error((await verifyRes.json()).message);
-      
+
       // Signature ok
       // Update manualy socket on server with connected user
       socket.emit("updateSocketAuth", message.address);
@@ -197,13 +199,20 @@ export default function ConnectSetting() {
   console.log("[Render] ConnectSetting");
   return (
     <Box padding={4} borderWidth="2px" borderRadius="lg">
-      <FormControl>
-        <FormLabel>Connected wallet and sign in</FormLabel>
+      <FormControl isInvalid={serverStatus.connectedUser ? false : true}>
+        <FormLabel as={"legend"}>
+          Connect a wallet and sign in with Ethereum
+        </FormLabel>
         <ButtonGroup>
           {isConnected ? (
             <Button onClick={disconnect as () => void}>Disconnet wallet</Button>
           ) : (
-            <Button isDisabled={serverStatus.connectedUser?true:false} onClick={onOpen}>Connect wallet</Button>
+            <Button
+              isDisabled={serverStatus.connectedUser ? true : false}
+              onClick={onOpen}
+            >
+              Connect wallet
+            </Button>
           )}
           {serverStatus.connectedUser ? (
             <Button onClick={logOut}>Sign-out</Button>
@@ -212,15 +221,16 @@ export default function ConnectSetting() {
               isDisabled={!state.nonce || state.loading || !isConnected}
               onClick={signIn}
             >
-              Sign-in
+              Sign in
             </Button>
           )}
         </ButtonGroup>
         <FormHelperText>
           {serverStatus.connectedUser
             ? "Connected user : " + serverStatus.connectedUser
-            : "You are no connected"}
+            : ""}
         </FormHelperText>
+        <FormErrorMessage>No user connected</FormErrorMessage>
         <Modal isOpen={isOpen} onClose={onClose} trapFocus={false}>
           <ModalOverlay zIndex={80} />
           <ModalContent containerProps={{ zIndex: 80 }}>
@@ -242,7 +252,7 @@ export default function ConnectSetting() {
                       " (connecting)"}
                   </Button>
                 ))}
-                {error && <div>{error.message}</div>}
+                {error && <Text color={"yellow"}>{error.message}</Text>}
               </VStack>
             </ModalBody>
           </ModalContent>

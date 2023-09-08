@@ -18,6 +18,9 @@ import {
   NumberInputField,
   useToast,
   Tooltip,
+  FormControl,
+  FormHelperText,
+  FormLabel,
 } from "@chakra-ui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -77,7 +80,7 @@ export default function AddCoinForm({ onAddCoin, coinlist }: Props) {
 
   /** Type of icon on plusButton : with or whithout beat animation */
   const plusIconButton =
-    coinAmount && selectedCoin.id ? (
+    coinAmount && selectedCoin.id && !editMode ? (
       <FontAwesomeIcon icon={faPlus} beat />
     ) : (
       <FontAwesomeIcon icon={faPlus} />
@@ -101,7 +104,6 @@ export default function AddCoinForm({ onAddCoin, coinlist }: Props) {
   const handleAdd = () => {
     if (coinlist.some((coin) => coin.id === selectedCoin.id)) {
       toast({
-        //title: 'Account created.',
         description: selectedCoin.name + " already exist in wallet",
         status: "warning",
         position: "top",
@@ -154,93 +156,108 @@ export default function AddCoinForm({ onAddCoin, coinlist }: Props) {
   }, [inputValue]);
 
   return (
-    <Flex width={"100%"} justifyContent={"space-between"} alignItems={"center"}>
-      <Box>
-        <Popover isOpen={isOpen} autoFocus={false}>
-          <PopoverTrigger>
-            <Box>
-              <InputGroup hidden={editMode ? false : true}>
-                <InputLeftElement pointerEvents="none">
-                  <FontAwesomeIcon icon={faMagnifyingGlass} />
-                </InputLeftElement>
-                <Input
-                  value={inputValue}
-                  onChange={handleChangeSearchInput}
-                  placeholder="Search coin"
-                />
-              </InputGroup>
-              <Flex
-                gap={2}
-                alignItems={"center"}
-                hidden={editMode ? true : false}
-              >
-                <Image
-                  boxSize="50px"
-                  src={selectedCoin.large}
-                  alt={selectedCoin.name}
-                />
-                <Flex direction={"column"}>
-                  <Text as="b" fontSize="lg">
-                    {selectedCoin.name}
-                  </Text>
-                  <Text fontSize={"sm"}>
-                    {selectedCoin.symbol + " "}
-                    <IconButton
-                      aria-label={"edit"}
-                      icon={<FontAwesomeIcon icon={faEdit} />}
-                      size={"xs"}
-                      onClick={() => setEditMode(true)}
-                    />
-                  </Text>
+    <FormControl>
+      <FormLabel as={"legend"}>Add Coin</FormLabel>
+      <Flex
+        width={"100%"}
+        justifyContent={"space-between"}
+        alignItems={"center"}
+      >
+        <Box>
+          <Popover isOpen={isOpen} autoFocus={false}>
+            <PopoverTrigger>
+              <Box>
+                <InputGroup hidden={editMode ? false : true}>
+                  <InputLeftElement pointerEvents="none">
+                    <FontAwesomeIcon icon={faMagnifyingGlass} />
+                  </InputLeftElement>
+                  <Input
+                    id="searchCoin"
+                    value={inputValue}
+                    onChange={handleChangeSearchInput}
+                    placeholder="Search coin"
+                  />
+                </InputGroup>
+                <Flex
+                  gap={2}
+                  alignItems={"center"}
+                  hidden={editMode ? true : false}
+                >
+                  <Image
+                    boxSize="50px"
+                    src={selectedCoin.large}
+                    alt={selectedCoin.name}
+                  />
+                  <Flex direction={"column"}>
+                    <Text as="b" fontSize="lg">
+                      {selectedCoin.name}
+                    </Text>
+                    <Text fontSize={"sm"}>
+                      {selectedCoin.symbol + " "}
+                      <IconButton
+                        aria-label={"edit"}
+                        icon={<FontAwesomeIcon icon={faEdit} />}
+                        size={"xs"}
+                        onClick={() => setEditMode(true)}
+                      />
+                    </Text>
+                  </Flex>
                 </Flex>
-              </Flex>
-            </Box>
-          </PopoverTrigger>
-          <PopoverContent width="100%">
-            <PopoverBody p={0}>
-              {suggestions.length > 0 && (
-                <UnorderedList mt={2} overflow={"auto"} maxHeight={200}>
-                  {suggestions.map((item) => (
-                    <ListItem
-                      key={item.id}
-                      cursor="pointer"
-                      onClick={() => {
-                        handleSelect(item);
-                      }}
-                      listStyleType="none"
-                      _hover={{ backgroundColor: "gray.200" }}
-                    >
-                      <Flex gap={2}>
-                        <Image src={item.thumb} /> {item.name} ({item.symbol})
-                      </Flex>
-                    </ListItem>
-                  ))}
-                </UnorderedList>
-              )}
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
-      </Box>
-      <Flex gap={1}>
-        <NumberInput
-          maxWidth={150}
-          onChange={(valueString) => setCoinAmount(valueString)}
-          value={coinAmount}
-        >
-          <NumberInputField
-            placeholder="Amount"
-            paddingInlineEnd={"var(--chakra-space-4)"}
-          />
-        </NumberInput>
-        <Tooltip label="Add coin to wallet">
-          <IconButton
-            aria-label={"add"}
-            icon={plusIconButton}
-            onClick={handleAdd}
-            isDisabled={coinAmount === "" || selectedCoin.id === ""}
-          />
-        </Tooltip>
+              </Box>
+            </PopoverTrigger>
+            <PopoverContent width="100%">
+              <PopoverBody p={0}>
+                {suggestions.length > 0 && (
+                  <UnorderedList mt={2} overflow={"auto"} maxHeight={200}>
+                    {suggestions.map((item) => (
+                      <ListItem
+                        key={item.id}
+                        cursor="pointer"
+                        onClick={() => {
+                          handleSelect(item);
+                        }}
+                        listStyleType="none"
+                        _hover={{ backgroundColor: "gray.200" }}
+                      >
+                        <Flex gap={2}>
+                          <Image src={item.thumb} /> {item.name} ({item.symbol})
+                        </Flex>
+                      </ListItem>
+                    ))}
+                  </UnorderedList>
+                )}
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+        </Box>
+        <Flex gap={1}>
+          <NumberInput
+            id="amount"
+            maxWidth={150}
+            onChange={(valueString) => setCoinAmount(valueString)}
+            value={coinAmount}
+          >
+            <NumberInputField
+              placeholder="Amount"
+              paddingInlineEnd={"var(--chakra-space-4)"}
+            />
+          </NumberInput>
+          <Tooltip label="Add coin to wallet">
+            <IconButton
+              colorScheme="blue"
+              aria-label={"add"}
+              icon={plusIconButton}
+              onClick={handleAdd}
+              isDisabled={
+                coinAmount === "" || selectedCoin.id === "" || editMode
+              }
+            />
+          </Tooltip>
+        </Flex>
       </Flex>
-    </Flex>
+      <FormHelperText>
+        You can add any supported coin by CoinGecko
+      </FormHelperText>
+    </FormControl>
   );
 }

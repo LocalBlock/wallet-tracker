@@ -17,6 +17,7 @@ import {
   ModalOverlay,
   Stack,
   Tooltip,
+  VStack,
   useDisclosure,
 } from "@chakra-ui/react";
 import React, { useContext, useState } from "react";
@@ -156,40 +157,46 @@ export default function GroupModal({
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <FormControl
-              isInvalid={!isValidGroupName() && groupName.length > 1}
-            >
-              <FormLabel>Name</FormLabel>
-              <Input
-                type="text"
-                onChange={handleInputChange}
-                value={groupName}
-              />
-              <FormErrorMessage>{errorMessage}</FormErrorMessage>
-            </FormControl>
-            <FormControl pt={8}>
-              <FormLabel>Select address</FormLabel>
-              <CheckboxGroup
-                colorScheme="green"
-                onChange={onChangeCheckbox}
-                defaultValue={defaultValue}
+            <VStack>
+              <FormControl
+                isInvalid={!isValidGroupName() && groupName.length > 1}
               >
-                <Stack
-                  spacing={0}
-                  direction={["column", "row"]}
-                  wrap={"wrap"}
-                  columnGap={6}
-                  rowGap={2}
+                <FormLabel>Name</FormLabel>
+                <Input
+                  type="text"
+                  onChange={handleInputChange}
+                  value={groupName}
+                />
+                <FormErrorMessage>{errorMessage}</FormErrorMessage>
+              </FormControl>
+              <FormControl as={"fieldset"}>
+                <FormLabel as={"legend"}>Group&apos;s addresses</FormLabel>
+                <CheckboxGroup
+                  colorScheme="green"
+                  onChange={onChangeCheckbox}
+                  defaultValue={defaultValue}
                 >
-                  {allWallet.map((wallet) => (
-                    <Checkbox key={wallet.id} value={wallet.id}>
-                      {wallet.displayName}
-                    </Checkbox>
-                  ))}
-                </Stack>
-              </CheckboxGroup>
-              <FormHelperText>Select one or more addresses</FormHelperText>
-            </FormControl>
+                  <Stack
+                    spacing={0}
+                    direction={["column", "row"]}
+                    wrap={"wrap"}
+                    columnGap={6}
+                    rowGap={2}
+                  >
+                    {allWallet.map((wallet) => (
+                      <Checkbox
+                        id={wallet.id}
+                        key={wallet.id}
+                        value={wallet.id}
+                      >
+                        {wallet.displayName}
+                      </Checkbox>
+                    ))}
+                  </Stack>
+                </CheckboxGroup>
+                <FormHelperText>Select one or more addresses</FormHelperText>
+              </FormControl>
+            </VStack>
           </ModalBody>
 
           <ModalFooter>
