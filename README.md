@@ -17,70 +17,77 @@ A simple wallet tracker web application to display current balance and prices fr
 * ENS name.
 * Custom wallet : Create a cutom wallet and add  coin/token manualy, useful if you want to track off chain assets.
 * Groups : Regroup wallet address to display the total balance of grouped wallets.
+* Notifications : Receive a notification when there is activity on addresses.
+* Synchronization : Save your configuration and wallets between devices. You need to connect your wallet and sign in with Ethereum.
 
+## Demo version
+
+TODO
 
 ## Intallation
 
 Choose witch method you prefer :
-- Run application in local developpment server
-- Build application and use it in your web server
-- Use docker with docker-compose
+- Run application in local developpment server.
+- Use builded docker image with docker-compose.
 
 ### Pre-requisites
-This app fetch : 
-- Blockchain data from Alchemy SDK, so you need an **[APIKEY](https://docs.alchemy.com/docs/alchemy-quickstart-guide#1key-create-an-alchemy-key)**.
-- Prices from CoinGecko, no need APIKEY
+You need an **[APIKEY](https://docs.alchemy.com/docs/alchemy-quickstart-guide#1key-create-an-alchemy-key)** from Alchemy for fetching balance from blockchains.
 
-### Local developpement server
-1. Download or clone this repo
+### Optional keys
+If you want :
+* Notifications : You need a **[Auth Token](https://docs.alchemy.com/reference/notify-api-faq#where-do-i-find-my-alchemy-auth-token)** from Alchemy.
+* Wallet Connect : You need a **[ProjectId](https://cloud.walletconnect.com/sign-in)** from WalletConnect cloud.
 
-2. Create `.env.local` file at root application for your APIKEY
+### Local developement server
+1. Download or clone this repo.
+
+2. Create `.env.local` file at root application for your API keys.
 ```dotenv
-VITE_APIKEY_ALCHEMY=YOUR_APIKEY
+VITE_REACT_APP_VERSION=$npm_package_version
+VITE_ALCHEMY_APIKEY=YOUR_APIKEY
+VITE_ALCHEMY_AUTHTOKEN=YOUR_AUTHTOKEN
+VITE_ALCHEMY_WEBHOOKURL=https://my.domain.com/alchemyhook
+VITE_WALLETCONNECT_PROJECTID=YOUR_PROJECTID
 ```
-3. Install and run server
+> `VITE_ALCHEMY_WEBHOOKURL` environment variable is only for developement and must point to express server, if you build application, url will be `window.location.origin`/alchemyhook
+3. Install and run servers.
 
 ```shell
+# FRONTEND
 # Install all dependencies
 yarn
-# Run a local developpement server
+# Run a local developement server
 yarn dev
 ```
-### Build
-1. Download or clone this repo
-2. Edit `.env.production` file and replace `VITE_APIKEY_ALCHEMY` value by your **APIKEY**
-
-```dotenv
-VITE_APIKEY_ALCHEMY=YOUR_APIKEY
-```
-3. Install and build application
 ```shell
+# BACKEND
+cd server
 # Install all dependencies
-yarn
-# Build production application
-yarn build
+npm install
+# Run express server
+node server.js
 ```
-Bundled application available in `./dist` folder.
 
-### Docker (docker-compose)
+## Use  Docker (docker-compose)
 
-Replace `VITE_APIKEY_ALCHEMY` environment variable value by your Alchemy **APIKEY**
 ```yaml
-version: '3'
+version: "3"
 services:
   wallet-tracker:
     image: ghcr.io/localblock/wallet-tracker:main
     environment:
-      - VITE_APIKEY_ALCHEMY=YOUR_APIKEY
-    command: sh -c "find /usr/share/nginx/html -name *.js -type f -exec sed -i \"s/VITE_APIKEY_ALCHEMY/$$VITE_APIKEY_ALCHEMY/g\" {} \\; && nginx -g \"daemon off;\""
+      - VITE_ALCHEMY_APIKEY=YOUR_APIKEY # Add your APIKEY
+      - VITE_ALCHEMY_AUTHTOKEN=YOUR_AUTHTOKEN # Optional
+      - VITE_WALLETCONNECT_PROJECTID=YOUR_PROJECTID # Optional
+      - TZ=Europe/Paris # Optional
+      - LANG=fr_FR.UTF-8 # Optional
+    volumes:
+      - /path/to/host:/srv/data # Persistent data
     restart: always
     ports:
-      - 80:80
-```
->The command in docker-compose allows to inject your Alchemy APIKEY in js files.
-## Demo version
+      - 8080:3000 # Change only host port if necessary
 
-TODO
+```
 
 ## License
 Distributed under the MIT License. See [LICENSE.md](./LICENCE.md) for more information.
