@@ -18,6 +18,10 @@ RUN yarn build
 FROM node:18-alpine
 WORKDIR /srv
 
+# Add locales and Timezone support in alpine image
+RUN apk add musl-locales musl-locales-lang tzdata
+ENV MUSL_LOCPATH=/usr/share/i18n/locales/musl
+
 # Install server app dependencies (production)
 COPY ./server/package*.json ./
 RUN npm ci --omit=dev

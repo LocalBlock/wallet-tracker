@@ -3,13 +3,13 @@ services:
   wallet-tracker:
     image: ghcr.io/localblock/wallet-tracker:main
     environment:
-      - VITE_ALCHEMY_APIKEY= # Add your APIKEY
-      - VITE_ALCHEMY_AUTHTOKEN= # Add your AUTHTOKEN
+      - VITE_ALCHEMY_APIKEY=YOUR_APIKEY # Add your APIKEY
+      - VITE_ALCHEMY_AUTHTOKEN=YOUR_AUTHTOKEN # Optional
+      - VITE_WALLETCONNECT_PROJECTID=YOUR_PROJECTID # Optional
+      - TZ=Europe/Paris # Optional
+      - LANG=fr_FR.UTF-8 # Optional
     volumes:
-      - data:/srv/data # Persistent data
+      - /path/to/host:/srv/data # Persistent data
     restart: always
     ports:
       - 8080:3000 # Change only host port if necessary
-    network_mode: bridge # Use default bridge (don't create a new network)
-volumes:
-  data:
