@@ -14,8 +14,9 @@ import {
   Stack,
   Text,
   useDisclosure,
+  useOutsideClick,
 } from "@chakra-ui/react";
-import React, { useContext } from "react";
+import React, { useContext, useRef } from "react";
 import Logo from "./Logo";
 import FetchIndicator from "./FetchIndicator";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -38,9 +39,12 @@ import SettingsMenu from "./Menus/SettingsMenu";
 import { Link as ReactRouterLink } from "react-router-dom";
 
 export default function Navbar() {
-  const { isOpen, onToggle } = useDisclosure();
+  const { isOpen, onToggle, onClose } = useDisclosure();
+  const ref = useRef(null);
+  useOutsideClick({ ref: ref, handler: onClose });
   return (
     <Box
+      ref={ref}
       as={"header"}
       position={"sticky"}
       zIndex={10}
@@ -64,18 +68,24 @@ export default function Navbar() {
         </Flex>
       </Flex>
       <Collapse in={isOpen} animateOpacity>
-        <MobileNav />
+        <MobileNav onCloseMenu={onClose} />
       </Collapse>
     </Box>
   );
 }
 
-const MobileNav = () => {
+const MobileNav = ({ onCloseMenu }: { onCloseMenu: () => void }) => {
   return (
     <Stack display={{ md: "none" }} padding={3}>
       <Flex alignItems={"center"}>
         <FontAwesomeIcon icon={faHome} pull="left" />
-        <Link as={ReactRouterLink} to={"/"} padding={0} fontSize={"lg"}>
+        <Link
+          as={ReactRouterLink}
+          to={"/"}
+          padding={0}
+          fontSize={"lg"}
+          onClick={onCloseMenu}
+        >
           Home
         </Link>
       </Flex>
@@ -83,13 +93,25 @@ const MobileNav = () => {
       <MobileNavGroup />
       <Flex alignItems={"center"}>
         <FontAwesomeIcon icon={faGear} pull="left" />
-        <Link as={ReactRouterLink} to={"/settings"} padding={0} fontSize={"lg"}>
+        <Link
+          as={ReactRouterLink}
+          to={"/settings"}
+          padding={0}
+          fontSize={"lg"}
+          onClick={onCloseMenu}
+        >
           Settings
         </Link>
       </Flex>
       <Flex alignItems={"center"}>
         <FontAwesomeIcon icon={faQuestionCircle} pull="left" />
-        <Link as={ReactRouterLink} to={"/about"} padding={0} fontSize={"lg"}>
+        <Link
+          as={ReactRouterLink}
+          to={"/about"}
+          padding={0}
+          fontSize={"lg"}
+          onClick={onCloseMenu}
+        >
           About
         </Link>
       </Flex>
@@ -181,12 +203,12 @@ const DesktopNav = () => {
       display={{ base: "none", md: "initial" }}
       spacing={0}
     >
-      <Link as={ReactRouterLink} to="/">
+      <Link as={ReactRouterLink} to="/" variant={"navLink"}>
         Home
       </Link>
       <Popover placement="bottom-start" trigger="hover">
         <PopoverTrigger>
-          <Link>Wallets</Link>
+          <Link variant={"navLink"}>Wallets</Link>
         </PopoverTrigger>
         <Portal>
           <PopoverContent width={"auto"}>
@@ -215,7 +237,7 @@ const DesktopNav = () => {
       </Popover>
       <Popover placement="bottom-start" trigger="hover">
         <PopoverTrigger>
-          <Link>Groups</Link>
+          <Link variant={"navLink"}>Groups</Link>
         </PopoverTrigger>
         <Portal>
           <PopoverContent width={"auto"}>
@@ -244,10 +266,10 @@ const DesktopNav = () => {
           </PopoverContent>
         </Portal>
       </Popover>
-      <Link as={ReactRouterLink} to={"/settings"}>
+      <Link as={ReactRouterLink} to={"/settings"} variant={"navLink"}>
         Settings
       </Link>
-      <Link as={ReactRouterLink} to={"/about"}>
+      <Link as={ReactRouterLink} to={"/about"} variant={"navLink"}>
         About
       </Link>
     </Stack>
