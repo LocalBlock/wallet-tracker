@@ -22,7 +22,7 @@ A simple wallet tracker web application to display current balance and prices fr
 
 ## Demo version
 
-TODO
+[Wallet Tracker](https://wallet.localblock.dev)
 
 ## Intallation
 
