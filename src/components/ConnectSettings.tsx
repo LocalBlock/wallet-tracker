@@ -33,6 +33,9 @@ import { socket } from "../socket";
 import { AddressWallet, CustomWallet, Web3Wallet } from "../classes/Wallet";
 import { AllWalletContext } from "../contexts/AllWalletContext";
 import { Coin } from "../classes/Coin";
+import { faWallet } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+faWallet;
 
 export default function ConnectSetting() {
   const { serverStatus, setServerStatus } = useContext(ServerStatusContext);
@@ -244,7 +247,11 @@ export default function ConnectSetting() {
                     key={connector.id}
                     onClick={() => connect({ connector })}
                   >
-                    <Image src={connector.id + ".svg"} boxSize={"30px"} />
+                    {connector.id != "injected" ? (
+                      <Image src={connector.id + ".svg"} boxSize={"30px"} />
+                    ) : (
+                      <FontAwesomeIcon icon={faWallet} size="xl" />
+                    )}
                     &nbsp;&nbsp;{connector.name}
                     {!connector.ready && " (unsupported)"}
                     {isLoading &&
