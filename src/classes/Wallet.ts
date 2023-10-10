@@ -251,9 +251,10 @@ export class AddressWallet extends Wallet {
         let price = 0;
         const vaultChain =
           findVault.chain === "polygon" ? "polygon-pos" : findVault.chain;
-
-        if (findVault.assets?.length === 1) {
-          //Single Token Case => no lps DATA!!
+        // 2 methods to procced data from beefy API
+        // With or whitout lps
+        if (findVault.oracle === "tokens") {
+          // Wihtout lps, we have directly contract token
           beefyTokens.push({
             id: getCoinID(
               vaultChain,
@@ -275,26 +276,51 @@ export class AddressWallet extends Wallet {
             },
           });
         } else {
-          beefyData.lpsData[findVault.id].tokens.forEach(
-            (beefyTokenContract) => {
-              beefyTokens.push({
-                id: getCoinID(
-                  vaultChain,
-                  beefyTokenContract.toLocaleLowerCase()
-                ) as string,
-                contract: beefyTokenContract.toLocaleLowerCase(),
-                image: "",
-                prices: {
-                  usd: 0,
-                  usd_24h_change: 0,
-                  eur: 0,
-                  eur_24h_change: 0,
-                  btc: 0,
-                  btc_24h_change: 0,
-                },
-              });
-            }
-          );
+          // With lps, we need to retreive data from lps also
+          if (beefyData.lpsData[findVault.id].tokens) {
+            beefyData.lpsData[findVault.id].tokens.forEach(
+              (beefyTokenContract) => {
+                beefyTokens.push({
+                  id: getCoinID(
+                    vaultChain,
+                    beefyTokenContract.toLocaleLowerCase()
+                  ) as string,
+                  contract: beefyTokenContract.toLocaleLowerCase(),
+                  image: "",
+                  prices: {
+                    usd: 0,
+                    usd_24h_change: 0,
+                    eur: 0,
+                    eur_24h_change: 0,
+                    btc: 0,
+                    btc_24h_change: 0,
+                  },
+                });
+              }
+            );
+          } else {
+            //Stargate case for exemple
+            beefyTokens.push({
+              id: getCoinID(
+                vaultChain,
+                findVault.tokenAddress
+                  ? findVault.tokenAddress.toLocaleLowerCase()
+                  : ""
+              ) as string,
+              contract: findVault.tokenAddress
+                ? findVault.tokenAddress.toLocaleLowerCase()
+                : "",
+              image: "",
+              prices: {
+                usd: 0,
+                usd_24h_change: 0,
+                eur: 0,
+                eur_24h_change: 0,
+                btc: 0,
+                btc_24h_change: 0,
+              },
+            });
+          }
           price = beefyData.lpsData[findVault.id].price;
         }
 
@@ -430,7 +456,13 @@ export class AddressWallet extends Wallet {
     //6.2 add price data on each token and each vault
     this.defi.beefy.forEach((vault) => {
       vault.tokens.forEach((token) => {
-        token.prices = responsePrices[token.id];
+        if (token.id) {
+          token.prices = responsePrices[token.id];
+        } else {
+          //Problems : Beefy vault token with no ID (unrecognized contract address in coingecko) Stargate case
+          // Prices to 0  :(
+          console.warn("Unrecognized token in Beefy Vault");
+        }
       });
       if (vault.tokens.length > 1)
         vault.defaultPrices = responsePrices["usd-coin"]; // Add USDC price as default price on Multi asset LP vault

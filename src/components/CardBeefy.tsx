@@ -24,7 +24,7 @@ import { beefyBalance, prices } from "../types/types";
 import { AddressWallet, CustomWallet, Web3Wallet } from "../classes/Wallet";
 
 interface Props {
-  allActiveWallet: (AddressWallet|CustomWallet|Web3Wallet)[];
+  allActiveWallet: (AddressWallet | CustomWallet | Web3Wallet)[];
   selectedChain: string[];
   selectedCurrency: string;
 }
@@ -92,13 +92,22 @@ export default function CardBeefy({
   selectedChain,
   selectedCurrency,
 }: Props) {
-  const allActiveWalletFiltered=allActiveWallet.filter(wallet=>wallet.type===("AddressWallet"||"Web3Wallet")) as (AddressWallet|Web3Wallet)[];
+  const allActiveWalletFiltered = allActiveWallet.filter(
+    (wallet) => wallet.type === ("AddressWallet" || "Web3Wallet")
+  ) as (AddressWallet | Web3Wallet)[];
 
   let beefyData = mergeBeefyAddresses(allActiveWalletFiltered);
 
   //Filter by chain
   beefyData = beefyData.filter((vault) =>
     selectedChain.some((element) => vault.chain === element)
+  );
+
+  // Descending sorting of beefyVault
+  beefyData.sort(
+    (a, b) =>
+      getBalanceVault(b, selectedCurrency as keyof prices) -
+      getBalanceVault(a, selectedCurrency as keyof prices)
   );
 
   let totalBalanceBeefy = 0;

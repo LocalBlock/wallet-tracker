@@ -18,27 +18,36 @@ import {
   Tag,
 } from "@chakra-ui/react";
 
-
 import { aaveBalance, appSettingsType } from "../types/types";
-
 import { AddressWallet, CustomWallet, Web3Wallet } from "../classes/Wallet";
 import { appSettings } from "../settings/appSettings";
 
 interface Props {
-  allActiveWallet: (AddressWallet|CustomWallet|Web3Wallet)[];
-  chainId: appSettingsType['chains'][number]['id']
+  allActiveWallet: (AddressWallet | CustomWallet | Web3Wallet)[];
+  chainId: appSettingsType["chains"][number]["id"];
   selectedCurrency: string;
   version: "V2" | "V3";
 }
+
 export default function CardAave({
   allActiveWallet,
   chainId,
   selectedCurrency,
   version,
 }: Props) {
-  const allActiveWalletFiltered=allActiveWallet.filter(activeAddress=>activeAddress.type===("AddressWallet"||"Web3Wallet")) as (AddressWallet|Web3Wallet)[];
-  const aaveData = mergeAaveAddresses(allActiveWalletFiltered, version, chainId);
+  const allActiveWalletFiltered = allActiveWallet.filter(
+    (activeAddress) => activeAddress.type === ("AddressWallet" || "Web3Wallet")
+  ) as (AddressWallet | Web3Wallet)[];
+  const aaveData = mergeAaveAddresses(
+    allActiveWalletFiltered,
+    version,
+    chainId
+  );
 
+  // Descending sorting of reserveData
+  aaveData.userReservesData.sort(
+    (a, b) => Number(b.underlyingBalanceUSD) - Number(a.underlyingBalanceUSD)
+  );
 
   //Calculate totalBalance
   let totalBalanceReserveCurrency = 0;
@@ -57,15 +66,17 @@ export default function CardAave({
       <CardHeader display={"flex"} alignItems={"center"} gap={5}>
         <Image boxSize={"55px"} src={appSettings.defi.aave.image}></Image>
         <Box>
-
-        <Heading size="md" paddingBottom={2}>
-          Aave{version} :{" "}
-          {formatBalanceCurrency(totalBalanceReserveCurrency, selectedCurrency)}
-        </Heading>
-        <Tag variant={chainId}>
-          {appSettings.chains.find((chain) => chain.id === chainId)?.name ??
-            "MultiChains"}
-        </Tag>
+          <Heading size="md" paddingBottom={2}>
+            Aave{version} :{" "}
+            {formatBalanceCurrency(
+              totalBalanceReserveCurrency,
+              selectedCurrency
+            )}
+          </Heading>
+          <Tag variant={chainId}>
+            {appSettings.chains.find((chain) => chain.id === chainId)?.name ??
+              "MultiChains"}
+          </Tag>
         </Box>
       </CardHeader>
       <CardBody>
