@@ -2,6 +2,7 @@ import { appSettings } from "../settings/appSettings";
 import { Token } from "../classes/Token";
 import {
   aaveBalance,
+  aaveSafetyModule,
   appSettingsType,
   beefyBalance,
   userSettings,
@@ -302,7 +303,7 @@ export function mergeAaveSafetyModuleToken(
   allActiveWallet.forEach((wallet) => {
     if (wallet.defi.aaveSafetyModule.aave.stakeTokenUserBalance != "0") {
       const newToken = new Token();
-      newToken.chain="ethereum"
+      newToken.chain = "ethereum";
       newToken.balance = formatUnits(
         BigInt(wallet.defi.aaveSafetyModule.aave.stakeTokenUserBalance),
         wallet.defi.aaveSafetyModule.aave.decimals
@@ -314,7 +315,7 @@ export function mergeAaveSafetyModuleToken(
     }
     if (wallet.defi.aaveSafetyModule.bpt.stakeTokenUserBalance != "0") {
       const newToken = new Token();
-      newToken.chain="ethereum"
+      newToken.chain = "ethereum";
       newToken.balance = formatUnits(
         BigInt(wallet.defi.aaveSafetyModule.bpt.stakeTokenUserBalance),
         wallet.defi.aaveSafetyModule.bpt.decimals
@@ -325,7 +326,7 @@ export function mergeAaveSafetyModuleToken(
       aaveSafetyModuleToken.push(newToken);
     }
   });
-  return aaveSafetyModuleToken
+  return aaveSafetyModuleToken;
 }
 
 export function mergeAaveSafetyModuleAddresses(
@@ -350,13 +351,39 @@ export function mergeAaveSafetyModuleAddresses(
     );
   });
 
-  const result = allActiveWallet[0].defi.aaveSafetyModule;
-  result.aave.stakeTokenUserBalance = mergeStakeAaveTokenUserBalance.toString();
-  result.aave.userIncentivesToClaim =
-    mergeStakeAaveUserIncentivesToClaim.toString();
-  result.bpt.stakeTokenUserBalance = mergeStakeBptTokenUserBalance.toString();
-  result.bpt.userIncentivesToClaim =
-    mergeStakeBptUserIncentivesToClaim.toString();
+  // Recreate manualy object, don't find a better method because others methods create reference object conflict
+  const result: aaveSafetyModule = {
+    aave: {
+      id: allActiveWallet[0].defi.aaveSafetyModule.aave.id,
+      image: allActiveWallet[0].defi.aaveSafetyModule.aave.image,
+      symbol: allActiveWallet[0].defi.aaveSafetyModule.aave.symbol,
+      decimals: allActiveWallet[0].defi.aaveSafetyModule.aave.decimals,
+      name: allActiveWallet[0].defi.aaveSafetyModule.aave.name,
+      prices: allActiveWallet[0].defi.aaveSafetyModule.aave.prices,
+      sparkline_in_7d:
+        allActiveWallet[0].defi.aaveSafetyModule.aave.sparkline_in_7d,
+      underlyingTokenContract:
+        allActiveWallet[0].defi.aaveSafetyModule.aave.underlyingTokenContract,
+      stakeTokenUserBalance: mergeStakeAaveTokenUserBalance.toString(),
+      userIncentivesToClaim: mergeStakeAaveUserIncentivesToClaim.toString(),
+      stakeApy: allActiveWallet[0].defi.aaveSafetyModule.aave.stakeApy,
+    },
+    bpt: {
+      id: allActiveWallet[0].defi.aaveSafetyModule.bpt.id,
+      image: allActiveWallet[0].defi.aaveSafetyModule.bpt.image,
+      symbol: allActiveWallet[0].defi.aaveSafetyModule.bpt.symbol,
+      decimals: allActiveWallet[0].defi.aaveSafetyModule.bpt.decimals,
+      name: allActiveWallet[0].defi.aaveSafetyModule.bpt.name,
+      prices: allActiveWallet[0].defi.aaveSafetyModule.bpt.prices,
+      sparkline_in_7d:
+        allActiveWallet[0].defi.aaveSafetyModule.bpt.sparkline_in_7d,
+      underlyingTokenContract:
+        allActiveWallet[0].defi.aaveSafetyModule.bpt.underlyingTokenContract,
+      stakeTokenUserBalance: mergeStakeBptTokenUserBalance.toString(),
+      userIncentivesToClaim: mergeStakeBptUserIncentivesToClaim.toString(),
+      stakeApy: allActiveWallet[0].defi.aaveSafetyModule.bpt.stakeApy,
+    },
+  };
   return result;
 }
 

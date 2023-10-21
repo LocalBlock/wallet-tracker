@@ -61,7 +61,12 @@ export default function Home() {
           selectedCurrency={userSettings.currency}
         />
         {/* Aave Safety Module */}
-        <CardAaveSafetyModule allActiveWallet={allActiveWallet} selectedCurrency={userSettings.currency} />
+        {userSettings.selectedChain.includes("ethereum") && (
+          <CardAaveSafetyModule
+            allActiveWallet={allActiveWallet}
+            selectedCurrency={userSettings.currency}
+          />
+        )}
         {/* AaveV2 */}
         {userSettings.selectedChain.map((chain, index) => (
           <CardAave
