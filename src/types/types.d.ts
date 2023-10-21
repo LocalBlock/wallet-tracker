@@ -31,6 +31,43 @@ export interface aaveBalance {
   }[];
 }
 
+export interface aaveSafetyModule {
+  aave: {
+    /** Coingecko Id */
+    id: string;
+    /** Coingecko image */
+    image: string;
+    symbol: string;
+    decimals:number
+    name: string;
+    /** Prices for underlying asset from Coingecko endpoint: /simple/price */
+    prices: prices;
+    sparkline_in_7d: { price: number[] };
+    /** Aave token */
+    underlyingTokenContract: string;
+    stakeTokenUserBalance: string;
+    userIncentivesToClaim: string;
+    stakeApy: string;
+  }|Record<string, never>;
+  bpt: {
+    /** Coingecko Id */
+    id: string;
+    /** Coingecko image */
+    image: string;
+    symbol: string;
+    decimals:number
+    name: string;
+    /** Prices for underlying asset from Coingecko endpoint: /simple/price */
+    prices: prices;
+    sparkline_in_7d: { price: number[] };
+    /** Aave Balancer Pool Token (ABPT) */
+    underlyingTokenContract: string;
+    stakeTokenUserBalance: string;
+    userIncentivesToClaim: string;
+    stakeApy: string;
+  }|Record<string, never>;
+}
+
 export interface beefyBalance {
   id: string;
   name: string;
@@ -140,14 +177,14 @@ export interface userSettings {
   }[];
   webhooks: WebhookWithAddresses[];
   notificationsEnable: boolean;
-  wallets:{
-    id:Wallet["id"]
-    type:Wallet["type"]
-    address?:AddressWallet["address"]
-    ens?:AddressWallet["ens"]
-    name?: CustomWallet["name"]
-    coins?:{id:Coin["id"],balance: Coin["balance"]}[]
-  }[]
+  wallets: {
+    id: Wallet["id"];
+    type: Wallet["type"];
+    address?: AddressWallet["address"];
+    ens?: AddressWallet["ens"];
+    name?: CustomWallet["name"];
+    coins?: { id: Coin["id"]; balance: Coin["balance"] }[];
+  }[];
 }
 
 /** Application settings */

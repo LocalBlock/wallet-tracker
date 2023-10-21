@@ -27,6 +27,7 @@ import {
   mergeBeefyToken,
   mergeTokensWallet,
   mergeCoinsWallet,
+  mergeAaveSafetyModuleToken,
 } from "../functions/utils";
 import { UserSettingsContext } from "../contexts/UserSettingsContext";
 import { prices } from "../types/types";
@@ -93,6 +94,8 @@ export default function ChartBalance({
   let allActiveTokens = mergeTokensWallet(allActiveWalletFiltered);
   // All coin merge from CustomWallet
   const allActiveCoins = mergeCoinsWallet(allActiveCustomWallet);
+  // Add Aave Safety Module Token
+  allActiveTokens.push(...mergeAaveSafetyModuleToken(allActiveWalletFiltered));
   // Add AaveToken
   allActiveTokens.push(...mergeAaveToken(allActiveWalletFiltered));
   // Add beefyToken

@@ -9,6 +9,7 @@ import {
 import { AddressWallet, CustomWallet, Web3Wallet } from "../classes/Wallet";
 import { Coin } from "../classes/Coin";
 import { getCoinList, updateUserSettings } from "./localstorage";
+import { formatUnits } from "viem";
 /**
  * Format balance for a token
  * @param balance
@@ -291,6 +292,72 @@ export function mergeAaveToken(
     });
   });
   return aaveTokens;
+}
+
+// For chartBalance
+export function mergeAaveSafetyModuleToken(
+  allActiveWallet: (AddressWallet | Web3Wallet)[]
+) {
+  const aaveSafetyModuleToken: Token[] = [];
+  allActiveWallet.forEach((wallet) => {
+    if (wallet.defi.aaveSafetyModule.aave.stakeTokenUserBalance != "0") {
+      const newToken = new Token();
+      newToken.chain="ethereum"
+      newToken.balance = formatUnits(
+        BigInt(wallet.defi.aaveSafetyModule.aave.stakeTokenUserBalance),
+        wallet.defi.aaveSafetyModule.aave.decimals
+      );
+      newToken.sparkline_in_7d =
+        wallet.defi.aaveSafetyModule.aave.sparkline_in_7d;
+      newToken.prices = wallet.defi.aaveSafetyModule.aave.prices;
+      aaveSafetyModuleToken.push(newToken);
+    }
+    if (wallet.defi.aaveSafetyModule.bpt.stakeTokenUserBalance != "0") {
+      const newToken = new Token();
+      newToken.chain="ethereum"
+      newToken.balance = formatUnits(
+        BigInt(wallet.defi.aaveSafetyModule.bpt.stakeTokenUserBalance),
+        wallet.defi.aaveSafetyModule.bpt.decimals
+      );
+      newToken.sparkline_in_7d =
+        wallet.defi.aaveSafetyModule.bpt.sparkline_in_7d;
+      newToken.prices = wallet.defi.aaveSafetyModule.bpt.prices;
+      aaveSafetyModuleToken.push(newToken);
+    }
+  });
+  return aaveSafetyModuleToken
+}
+
+export function mergeAaveSafetyModuleAddresses(
+  allActiveWallet: (AddressWallet | Web3Wallet)[]
+) {
+  let mergeStakeAaveTokenUserBalance = BigInt("0");
+  let mergeStakeAaveUserIncentivesToClaim = BigInt("0");
+  let mergeStakeBptTokenUserBalance = BigInt("0");
+  let mergeStakeBptUserIncentivesToClaim = BigInt("0");
+  allActiveWallet.forEach((wallet) => {
+    mergeStakeAaveTokenUserBalance += BigInt(
+      wallet.defi.aaveSafetyModule.aave.stakeTokenUserBalance
+    );
+    mergeStakeAaveUserIncentivesToClaim += BigInt(
+      wallet.defi.aaveSafetyModule.aave.userIncentivesToClaim
+    );
+    mergeStakeBptTokenUserBalance += BigInt(
+      wallet.defi.aaveSafetyModule.bpt.stakeTokenUserBalance
+    );
+    mergeStakeBptUserIncentivesToClaim += BigInt(
+      wallet.defi.aaveSafetyModule.bpt.userIncentivesToClaim
+    );
+  });
+
+  const result = allActiveWallet[0].defi.aaveSafetyModule;
+  result.aave.stakeTokenUserBalance = mergeStakeAaveTokenUserBalance.toString();
+  result.aave.userIncentivesToClaim =
+    mergeStakeAaveUserIncentivesToClaim.toString();
+  result.bpt.stakeTokenUserBalance = mergeStakeBptTokenUserBalance.toString();
+  result.bpt.userIncentivesToClaim =
+    mergeStakeBptUserIncentivesToClaim.toString();
+  return result;
 }
 
 export function mergeAaveAddresses(

@@ -10,6 +10,7 @@ import CardAave from "../components/CardAave";
 import CardBeefy from "../components/CardBeefy";
 import ChartBalance from "../components/ChartBalance";
 import { AddressWallet, CustomWallet, Web3Wallet } from "../classes/Wallet";
+import CardAaveSafetyModule from "../components/CardAaveSafetyModule";
 
 export default function Home() {
   const { allWallet } = useContext(AllWalletContext);
@@ -59,6 +60,8 @@ export default function Home() {
           selectedChain={userSettings.selectedChain}
           selectedCurrency={userSettings.currency}
         />
+        {/* Aave Safety Module */}
+        <CardAaveSafetyModule allActiveWallet={allActiveWallet} selectedCurrency={userSettings.currency} />
         {/* AaveV2 */}
         {userSettings.selectedChain.map((chain, index) => (
           <CardAave

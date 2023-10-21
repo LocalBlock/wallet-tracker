@@ -1,5 +1,5 @@
 import { getAllTokenBalance, getNativeBalance } from "../functions/Alchemy";
-import { fetchAave } from "../functions/aave";
+import { fetchAave, fetchAaveSafetyModule } from "../functions/aave";
 import { fetchBeefyData } from "../functions/beefy";
 import { getCoinMarket, getCoinPrices } from "../functions/coingecko";
 import { getUserSettings, updateUserSettings } from "../functions/localstorage";
@@ -8,6 +8,7 @@ import { getCoinID } from "../functions/utils";
 import { appSettings } from "../settings/appSettings";
 import {
   aaveBalance,
+  aaveSafetyModule,
   appSettingsType,
   beefyBalance,
   fetchCoinMarket,
@@ -83,6 +84,7 @@ export class AddressWallet extends Wallet {
   lastFetchBalance: number;
   lastFetchPrices: number;
   defi: {
+    aaveSafetyModule: aaveSafetyModule;
     aaveV2: {
       [chain in appSettingsType["chains"][number]["id"]]: aaveBalance;
     };
@@ -110,6 +112,10 @@ export class AddressWallet extends Wallet {
       this.lastFetchBalance = 0;
       this.lastFetchPrices = 0;
       this.defi = {
+        aaveSafetyModule: {
+          aave: {},
+          bpt: {},
+        },
         aaveV2: {
           ethereum: { netWorthUSD: "0", userReservesData: [] },
           "polygon-pos": { netWorthUSD: "0", userReservesData: [] },
@@ -188,6 +194,21 @@ export class AddressWallet extends Wallet {
   }
   private async getAaaveData() {
     let step = 1;
+    // Aave Safety Module Only on Ethereum chain
+    console.log(
+      `[${this.displayName}] 2.${step++} Fetch Aave safety module on Ethereum`
+    );
+    this.defi.aaveSafetyModule = await fetchAaveSafetyModule(this.address);
+    // Add Coin id
+    this.defi.aaveSafetyModule.aave.id = getCoinID(
+      "ethereum",
+      this.defi.aaveSafetyModule.aave.underlyingTokenContract
+    ) as string;
+    this.defi.aaveSafetyModule.bpt.id = getCoinID(
+      "ethereum",
+      this.defi.aaveSafetyModule.bpt.underlyingTokenContract
+    ) as string;
+
     for await (const chain of appSettings.chains) {
       // Aave V2
       console.log(
@@ -348,6 +369,10 @@ export class AddressWallet extends Wallet {
     allId.push("usd-coin"); // Fetch by default USDC for beefy currency conversion
     this.tokens.forEach((token) => (token.id ? allId.push(token.id) : null)); //Id from Tokens
 
+    // Id from Aave Safety Module
+    allId.push(this.defi.aaveSafetyModule.aave.id);
+    allId.push(this.defi.aaveSafetyModule.bpt.id);
+
     //Id from Aave
     appSettings.chains.forEach((chain) => {
       this.defi.aaveV2[chain.id]?.userReservesData.forEach((userReserveData) =>
@@ -393,7 +418,27 @@ export class AddressWallet extends Wallet {
       Object.assign(token, responseMarket[index]);
     });
 
-    // 5.1 Add market data on Aave balance
+    // 5.1 Add market data on Aave
+    // Aave Safety Module
+    const indexAaveSafetyModule = responseMarket.findIndex(
+      (coinMarket) => coinMarket.id === this.defi.aaveSafetyModule.aave.id
+    );
+    if (indexAaveSafetyModule != 1) {
+      this.defi.aaveSafetyModule.aave.image =
+        responseMarket[indexAaveSafetyModule].image;
+      this.defi.aaveSafetyModule.aave.sparkline_in_7d =
+        responseMarket[indexAaveSafetyModule].sparkline_in_7d;
+    }
+    const indexBptSafetyModule = responseMarket.findIndex(
+      (coinMarket) => coinMarket.id === this.defi.aaveSafetyModule.bpt.id
+    );
+    if (indexBptSafetyModule != 1) {
+      this.defi.aaveSafetyModule.bpt.image =
+        responseMarket[indexBptSafetyModule].image;
+      this.defi.aaveSafetyModule.bpt.sparkline_in_7d =
+        responseMarket[indexBptSafetyModule].sparkline_in_7d;
+    }
+
     appSettings.chains.forEach((chain) => {
       // Aave V2
       this.defi.aaveV2[chain.id]?.userReservesData.forEach(
@@ -439,6 +484,12 @@ export class AddressWallet extends Wallet {
       if (token.id) token.prices = responsePrices[token.id];
     });
     // 6.1 Add price data on Aavve balance
+    // Aave Safety Module
+    this.defi.aaveSafetyModule.aave.prices =
+      responsePrices[this.defi.aaveSafetyModule.aave.id];
+    this.defi.aaveSafetyModule.bpt.prices =
+      responsePrices[this.defi.aaveSafetyModule.bpt.id];
+
     appSettings.chains.forEach((chain) => {
       // Aave V2
       this.defi.aaveV2[chain.id]?.userReservesData.forEach(
