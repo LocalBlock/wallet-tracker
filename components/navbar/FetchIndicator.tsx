@@ -43,6 +43,7 @@ export default function FetchIndicator() {
     refetchInterval: appSettings.intervalCheck,
     refetchIntervalInBackground: true,
     staleTime: Infinity, //the data will never be considered stale
+    enabled: user ? true : false,
   });
 
   const queryClient = useQueryClient();
