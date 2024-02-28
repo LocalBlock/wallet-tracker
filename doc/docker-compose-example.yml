@@ -1,15 +1,23 @@
 version: "3"
 services:
   wallet-tracker:
-    image: ghcr.io/localblock/wallet-tracker:main
+    image: ghcr.io/localblock/wallet-tracker
     environment:
-      - VITE_ALCHEMY_APIKEY=YOUR_APIKEY # Add your APIKEY
-      - VITE_ALCHEMY_AUTHTOKEN=YOUR_AUTHTOKEN # Optional
-      - VITE_WALLETCONNECT_PROJECTID=YOUR_PROJECTID # Optional
-      - TZ=Europe/Paris # Optional
-      - LANG=fr_FR.UTF-8 # Optional
-    volumes:
-      - /path/to/host:/srv/data # Persistent data
+      - DATABASE_URL=YOUR_DATABASE_URL # postgresql://wallet-tracker:YOUR_DATABASE_PASSWWORD@localhost:5432/wallet-tracker?schema=public
+      - SESSION_PASSWORD=YOUR_SESSION_PASSWORD # Iron Session - Private key used to encrypt the cookie. It has to be at least 32 characters long
+      - ALCHEMY_APIKEY=YOUR_APIKEY # From Alchemy dashboard
+      - ALCHEMY_AUTHTOKEN=YOUR_AUTHTOKEN # From Alchemy dashboard
     restart: always
     ports:
-      - 8080:3000 # Change only host port if necessary
+      - 3000:3000
+
+  database:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=YOUR_DATABASE_PASSWWORD # Same password than wallet-tracker container
+      - POSTGRES_USER=wallet-tracker # Create a database with same username
+    volumes:
+      - pgdata:/var/lib/postgresql/data

@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// Always after the prisma-client-js generator
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// USER
+model User {
+  address             String          @id
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  addressWallets      AddressWallet[]
+  customWallets       CustomWallet[]
+  currency            String          @default("usd")
+  selectedChains      String[]        @default(["ethereum", "polygon-pos"])
+  selectedWalletId    String?
+  selectedGroupId     String?
+  groups              Group[]
+  notificationsEnable Boolean         @default(false)
+  webhooks            Webhook[]
+  notifications       Notification[]
+}
+
+model Webhook {
+  id          String   @id
+  user        User     @relation(fields: [userAddress], references: [address], onDelete: Cascade)
+  userAddress String
+  network     String
+  type        String
+  url         String
+  isActive    Boolean
+  timeCreated DateTime
+  signingKey  String
+  version     String
+  addresses   String[]
+}
+
+model Notification {
+  id          String   @id
+  createdAt   DateTime
+  type        String
+  chainId     String
+  user        User     @relation(fields: [userAddress], references: [address], onDelete: Cascade)
+  userAddress String
+  isSent      Boolean
+  hash        String
+  /// [AssetNotifications]
+  transfer    Json
+  /// [AssetNotifications]
+  sent        Json
+  /// [AssetNotifications]
+  received    Json
+}
+
+model AddressWallet {
+  address      String   @id
+  users        User[]
+  ens          String?
+  lastfetch    DateTime
+  /// [NativeTokens]
+  nativeTokens Json     @default("[]")
+  /// [Tokens]
+  tokens       Json     @default("[]")
+  /// [Defi]
+  defi         Json     @default("{}")
+}
+
+model CustomWallet {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userAddress], references: [address], onDelete: Cascade)
+  userAddress String
+  lastfetch   DateTime
+  name        String
+  /// [Coins]
+  coins       Json     @default("[]")
+}
+
+model Group {
+  id          String @id @default(cuid())
+  user        User   @relation(fields: [userAddress], references: [address], onDelete: Cascade)
+  userAddress String
+
+  name      String
+  walletIds String[]
+}
+
+model CoinList {
+  id        Int      @id @default(autoincrement())
+  updatedAt DateTime @updatedAt
+  /// [List]
+  list      Json
+}
+
+model CoinData {
+  id              String    @id
+  updatedAt       DateTime  @updatedAt
+  name            String
+  symbol          String
+  image           String
+  last_updated    DateTime?
+  /// [Sparkline_in_7d]
+  sparkline_in_7d Json
+  /// [Price]
+  price           Json
+}
+
+model ContractData {
+  id       Int     @id @default(autoincrement())
+  chainId  String
+  address  String
+  decimals Int?
+  name     String?
+  symbol   String?
+}

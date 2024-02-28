@@ -1,40 +1,98 @@
-# Build stage
-# Build app with vite
-FROM node:18-alpine AS build
+FROM node:18-alpine AS base
+
+# Step 1. Rebuild the source code only when needed
+FROM base AS builder
 
 WORKDIR /app
 
-# Installing dependencies
-COPY ./package.json ./
-RUN yarn
+# Install dependencies based on the preferred package manager
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+# Omit --production flag for TypeScript devDependencies
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i; \
+  # Allow install without lockfile, so example works even without Node.js installed locally
+  else echo "Warning: Lockfile not found. It is recommended to commit lockfiles to version control." && yarn install; \
+  fi
 
-# Copying all the files in our project
+# COPY src ./src
+# COPY public ./public
+# COPY next.config.js .
+# COPY tsconfig.json .
 COPY . .
 
-# Building our application
-RUN yarn build
+# Copy Prisma schema and migration files
+COPY prisma ./prisma/
 
-# Build server
-FROM node:18-alpine
-WORKDIR /srv
+# Generate prisma client
+RUN yarn prisma generate
 
-# Add locales and Timezone support in alpine image
-RUN apk add musl-locales musl-locales-lang tzdata
-ENV MUSL_LOCPATH=/usr/share/i18n/locales/musl
+# Environment variables must be present at build time
+# https://github.com/vercel/next.js/discussions/14030
+# ARG DATABASE_URL
+# ENV DATABASE_URL=${DATABASE_URL}
+# ARG ALCHEMY_APIKEY
+# ENV ALCHEMY_APIKEY=${ALCHEMY_APIKEY}
+# ARG ALCHEMY_AUTHTOKEN
+# ENV ALCHEMY_AUTHTOKEN=${ALCHEMY_AUTHTOKEN}
+# ARG NEXT_PUBLIC_ENV_VARIABLE
+# ENV NEXT_PUBLIC_ENV_VARIABLE=${NEXT_PUBLIC_ENV_VARIABLE}
 
-# Install server app dependencies (production)
-COPY ./server/package*.json ./
-RUN npm ci --omit=dev
+# Next.js collects completely anonymous telemetry data about general usage. Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line to disable telemetry at build time
+# ENV NEXT_TELEMETRY_DISABLED 1
 
-COPY ./server/*.js ./
+# Build Next.js based on the preferred package manager
+RUN \
+  if [ -f yarn.lock ]; then yarn build; \
+  elif [ -f package-lock.json ]; then npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then pnpm build; \
+  else yarn build; \
+  fi
 
-# Copy app from build stage to server
-COPY --from=build /app/dist ./app
+# Note: It is not necessary to add an intermediate step that does a full copy of `node_modules` here
 
-# Set Node.js to production
-ENV NODE_ENV=production
+# Step 2. Production image, copy all the files and run next
+FROM base AS runner
 
-CMD [ "node","server.js" ]
+WORKDIR /app
 
-# Server port
-EXPOSE 3000
+# Don't run production as root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+USER nextjs
+
+COPY --from=builder /app/public ./public
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# Environment variables must be redefined at run time
+# ARG DATABASE_URL
+# ENV DATABASE_URL=${DATABASE_URL}
+# ARG ALCHEMY_APIKEY
+# ENV ALCHEMY_APIKEY=${ALCHEMY_APIKEY}
+# ARG ALCHEMY_AUTHTOKEN
+# ENV ALCHEMY_AUTHTOKEN=${ALCHEMY_AUTHTOKEN}
+
+# Uncomment the following line to disable telemetry at run time
+# ENV NEXT_TELEMETRY_DISABLED 1
+
+# Note: Don't expose ports here, Compose will handle that for us
+
+# CMD ["node", "server.js"]
+
+# Add prisma cli to execute prisma migrate deploy
+RUN yarn global add prisma
+
+# Fix Error: connect ECONNREFUSED 127.0.0.1:3000 with fetch in server action
+ENV HOSTNAME=0.0.0.0
+
+# Excecute command from package JSON to initialise or migrate Database (prisma migrate deploy) and start server 
+CMD [ "yarn","run", "prod" ]
