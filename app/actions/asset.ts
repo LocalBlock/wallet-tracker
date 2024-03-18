@@ -151,12 +151,20 @@ export async function getDefi(selectedWalletId: string[]) {
           safetyModule.decimals
         )
       );
+      // Incentives => Aave Token
+      const formatteduserIncentivesToClaim = Number(
+        formatUnits(
+          BigInt(safetyModule.userIncentivesToClaim),
+          18
+        )
+      );
       return {
         ...safetyModule,
         name: cd.name,
         symbol: cd.symbol,
         image: cd.image,
         balance: formattedStakeTokenUserBalance,
+        balanceToClaim:formatteduserIncentivesToClaim,
         // Safety module is only ethereum
         chain: "ethereum",
         price: cd.price,

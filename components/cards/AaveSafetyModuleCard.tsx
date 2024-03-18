@@ -90,9 +90,13 @@ export default function AaveSafetyModuleCard({
                       " " +
                       safetyModule.symbol.toUpperCase()}
                   </Box>
+                  <Box >
+                    Claimable : {formatBalanceToken(safetyModule.balanceToClaim) +
+                      " AAVE"}
+                  </Box>
                 </Box>
               </Flex>
-              <Box textAlign={"right"}>
+              <Box textAlign={"right"} my={"auto"}>
                 <Box>
                   {formatBalanceCurrency(
                     safetyModule.balance * safetyModule.price[selectedCurrency],
