@@ -1,7 +1,6 @@
 import useSWR from "swr";
 import { SessionData, defaultSession } from "@/app/session";
 import useSWRMutation from "swr/mutation";
-import { SiweMessage } from "siwe";
 
 const sessionApiRoute =
   "/api/siwe";
@@ -19,10 +18,10 @@ async function fetchJson<JSON = unknown>(
   }).then((res) => res.json());
 }
 
-function doLogin(url: string, { arg }: { arg: {message:SiweMessage,signature:string} }) {
+function doLogin(url: string, { arg }: { arg: {userAddress:string} }) {
   return fetchJson<SessionData>(url, {
     method: "POST",
-    body: JSON.stringify({ message: arg.message,signature:arg.signature }),
+    body: JSON.stringify({ userAddress: arg.userAddress}),
   });
 }
 

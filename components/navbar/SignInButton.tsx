@@ -2,9 +2,9 @@ import { Button } from "@chakra-ui/react";
 import Image from "next/image";
 import siweLogo from "@/public/SIWE_Logomark_Gradient.png";
 import React, { useEffect, useState } from "react";
-import { SiweError, SiweMessage } from "siwe";
+import { createSiweMessage, parseSiweMessage } from "viem/siwe";
 import { Address } from "viem";
-import { BaseErrorType, useSignMessage } from "wagmi";
+import { useSignMessage } from "wagmi";
 import useSession from "@/hooks/useSession";
 import { useQuery } from "@tanstack/react-query";
 import { getUserData } from "@/app/actions/user";
@@ -57,47 +57,58 @@ export default function SignInButton({
       setIsLoading(true);
       onError({ isError: false, title: "", description: "" });
 
-      // Create SIWE message with pre-fetched nonce and sign with wallet
-      const message = new SiweMessage({
-        domain: window.location.host,
+      //Create SIWE message with pre-fetched nonce
+      const message = createSiweMessage({
         address,
-        statement: "Sign in to access all features.",
+        chainId,
+        domain: window.location.host,
+        nonce: nonce!,
         uri: window.location.origin,
         version: "1",
-        chainId,
-        nonce,
+        statement: "Sign in to access Wallet Tracker.",
       });
 
-      // Sign message
+      // Sign SIWE message
       const signature = await signMessageAsync({
-        message: message.prepareMessage(),
+        message,
       });
 
-      // Do log-in
-      const result = await login({ message, signature });
+      // Verify SIWE message with signature on backend
+      const isValid = (await (
+        await fetch("/api/siwe/verify", {
+          method: "POST",
+          body: JSON.stringify({ message, signature }),
+        })
+      ).json()) as boolean;
 
-      // Signature is valid
-      console.log("Sign in with ethereum success");
-
-      setIsLoading(false);
-      refetch();
-      onSuccess();
-    } catch (error: any) {
-      if (error instanceof SiweError) {
-        onError({
-          isError: true,
-          title: "Sign-In with Ethereum",
-          description: error.type,
+      if (isValid) {
+        // Signature is valid, Do log-in with Iron session and SWR
+        const sessionData = await login({
+          userAddress: parseSiweMessage(message).address!,
         });
+        if (sessionData.isLoggedIn) {
+          // Login success
+          console.log("Sign in with ethereum success");
+
+          refetch();
+          onSuccess();
+        } else {
+          onError({
+            isError: true,
+            title: "Login",
+            description: "Login Failed",
+          });
+        }
       } else {
-        const baseError = error as BaseErrorType;
         onError({
           isError: true,
-          title: baseError.name,
-          description: baseError.message,
+          title: "SIWE Verify",
+          description: "SIWE verify fail",
         });
       }
-      //console.error(error);
+      setIsLoading(false);
+    } catch (error) {
+      console.error(error);
       setIsLoading(false);
       setNonce(undefined);
       fetchNonce();
