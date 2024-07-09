@@ -18,10 +18,10 @@ async function fetchJson<JSON = unknown>(
   }).then((res) => res.json());
 }
 
-function doLogin(url: string, { arg }: { arg: {userAddress:string} }) {
+function doLogin(url: string, { arg }: { arg: {message:string,signature:string} }) {
   return fetchJson<SessionData>(url, {
     method: "POST",
-    body: JSON.stringify({ userAddress: arg.userAddress}),
+    body: JSON.stringify({ message: arg.message,signature:arg.signature }),
   });
 }
 

@@ -73,39 +73,25 @@ export default function SignInButton({
         message,
       });
 
-      // Verify SIWE message with signature on backend
-      const isValid = (await (
-        await fetch("/api/siwe/verify", {
-          method: "POST",
-          body: JSON.stringify({ message, signature }),
-        })
-      ).json()) as boolean;
+      //  Do log-in with Iron session and SWR
+      const sessionData = await login({
+        message,
+        signature,
+      });
+      if (sessionData.isLoggedIn) {
+        // Login success
+        console.log("Sign in with ethereum success");
 
-      if (isValid) {
-        // Signature is valid, Do log-in with Iron session and SWR
-        const sessionData = await login({
-          userAddress: parseSiweMessage(message).address!,
-        });
-        if (sessionData.isLoggedIn) {
-          // Login success
-          console.log("Sign in with ethereum success");
-
-          refetch();
-          onSuccess();
-        } else {
-          onError({
-            isError: true,
-            title: "Login",
-            description: "Login Failed",
-          });
-        }
+        refetch();
+        onSuccess();
       } else {
         onError({
           isError: true,
-          title: "SIWE Verify",
-          description: "SIWE verify fail",
+          title: "Login Failed",
+          description: "SIWE Failed",
         });
       }
+
       setIsLoading(false);
     } catch (error) {
       console.error(error);
