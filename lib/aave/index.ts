@@ -1,59 +1,15 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import { getCoinlist } from "@/app/actions/coinData";
 import { appSettings } from "@/app/appSettings";
 import { AddressWallet } from "@prisma/client";
-import { ethers } from "ethers";
-import {
-  UiPoolDataProvider,
-  UiStakeDataProviderV3,
-} from "@aave/contract-helpers";
+// Custom version of @aave/contract-helpers which use Wagmi/view instead of ethers@5
+import { UiPoolDataProvider, UiStakeDataProviderV3 } from "./contract-helpers";
+// But official version for math :)
 import { formatUserSummary, formatReserves } from "@aave/math-utils";
+import { poolConfig } from "./poolConfig";
+import { stakeConfig } from "./stakeConfig";
 import { AaveBalance } from "@/types";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const query = req.query["query"];
-  const address = req.query["address"];
-  if (req.method === "GET") {
-    if (typeof address === "string") {
-      switch (query) {
-        case "safetyModule": {
-          try {
-            const safetyModule = await fetchAaveSafetyModule(address);
-            res.json(safetyModule);
-          } catch (error) {
-            console.log(error);
-            res.status(500).json(error);
-          }
-          break;
-        }
-        case "pools":
-          {
-            try {
-              const aavePools = await fetchAavePools(address);
-              res.json(aavePools);
-            } catch (error) {
-              console.log(error);
-              res.status(500).json(error);
-            }
-          }
-          break;
-        default:
-          res.status(400).send("Unknown query");
-          break;
-      }
-    } else {
-      res.status(400).send("Address parameter missing or bad format");
-    }
-  } else {
-    res.status(405);
-  }
-}
-
-async function fetchAaveSafetyModule(address: string) {
-  const stakeConfig = appSettings.defi.aave.stakeConfig;
+export async function fetchAaveSafetyModule(address: string) {
   const stakedTokens = [
     stakeConfig.tokens["aave"].TOKEN_STAKING,
     stakeConfig.tokens["bpt"].TOKEN_STAKING,
@@ -64,17 +20,10 @@ async function fetchAaveSafetyModule(address: string) {
     stakeConfig.tokens["bpt"].TOKEN_ORACLE,
     stakeConfig.tokens["gho"].TOKEN_ORACLE,
   ];
-
-  const rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_APIKEY}`;
   const user = address;
-  const provider = new ethers.providers.StaticJsonRpcProvider(
-    rpcUrl,
-    stakeConfig.chainId
-  );
 
   const stakeDataProviderContract = new UiStakeDataProviderV3({
     uiStakeDataProvider: stakeConfig.stakeDataProvider,
-    provider,
   });
   const generalStakeUIData =
     await stakeDataProviderContract.getStakedAssetDataBatch(
@@ -121,7 +70,7 @@ async function fetchAaveSafetyModule(address: string) {
   return result;
 }
 
-async function fetchAavePools(address: string) {
+export async function fetchAavePools(address: string) {
   const coinlist = await getCoinlist();
 
   const result: {
@@ -141,33 +90,21 @@ async function fetchAavePools(address: string) {
   const user = address;
 
   // Get versions from appSetting poolConfig object
-  const versions = Object.keys(
-    appSettings.defi.aave.poolConfig
-  ) as (keyof typeof appSettings.defi.aave.poolConfig)[];
+  const versions = Object.keys(poolConfig) as (keyof typeof poolConfig)[];
   for await (const version of versions) {
     // Get chains from appSetting poolConfig object
     for await (const chain of appSettings.chains) {
       // Check if chain exist in pool config
-      if (appSettings.defi.aave.poolConfig[version][chain.id]) {
-        const rpcUrl = `https://${chain.alchemyMainnet}.g.alchemy.com/v2/${process.env.ALCHEMY_APIKEY}`;
-
-        const provider = new ethers.providers.StaticJsonRpcProvider(
-          rpcUrl,
-          chain.chainIdMainnet
-        );
-
+      if (poolConfig[version][chain.id]) {
         //Contract address
         const uiPoolDataProviderAddress =
-          appSettings.defi.aave.poolConfig[version][chain.id]
-            .uiPoolDataProviderAddress;
+          poolConfig[version][chain.id].uiPoolDataProviderAddress;
         const lendingPoolAddressProvider =
-          appSettings.defi.aave.poolConfig[version][chain.id]
-            .lendingPoolAddressProvider;
+          poolConfig[version][chain.id].lendingPoolAddressProvider;
 
         // View contract used to fetch all reserves data (including market base currency data), and user reserves
         const poolDataProviderContract = new UiPoolDataProvider({
           uiPoolDataProviderAddress,
-          provider,
           chainId: chain.chainIdMainnet,
         });
 

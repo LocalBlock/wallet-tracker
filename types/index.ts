@@ -2,6 +2,8 @@ import { Socket, Server as NetServer } from "net";
 import { Server as SocketIOServer } from "socket.io";
 import type { NextApiResponse } from "next";
 import { appSettings } from "@/app/appSettings";
+import { poolConfig } from "@/lib/aave/poolConfig";
+import { stakeConfig } from "@/lib/aave/stakeConfig";
 import { Prisma } from "@prisma/client";
 import { getUserData } from "@/app/actions/user";
 import { Network, WebhookType } from "alchemy-sdk";
@@ -58,7 +60,7 @@ export type UserWithRelations = NonNullable<
 
 export type WalletType = "AddressWallet" | "CustomWallet";
 export type ChainId = (typeof appSettings.chains)[number]["id"];
-export type AaveVersions = keyof typeof appSettings.defi.aave.poolConfig;
+export type AaveVersions = keyof typeof poolConfig;
 
 export type FetchCoinList = {
   id: string;
@@ -142,7 +144,7 @@ export type SearchResultApi = {
 };
 
 export type AaveSafetyModule = {
-  [Property in keyof typeof appSettings.defi.aave.stakeConfig.tokens]: {
+  [Property in keyof typeof stakeConfig.tokens]: {
     coinDataId: string;
     decimals: number;
     stakeTokenUserBalance: string;

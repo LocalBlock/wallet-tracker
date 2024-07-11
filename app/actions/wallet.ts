@@ -9,6 +9,7 @@ import { AddressWallet, CustomWallet } from "@prisma/client";
 import { fetchBeefyVaults } from "@/lib/beefy";
 import { createCoinData, updateCoinData } from "./coinData";
 import { UpdatePayload, updateWebhooks } from "./webhook";
+import { fetchAavePools, fetchAaveSafetyModule } from "@/lib/aave";
 
 export async function addAddressWallet({
   address,
@@ -110,7 +111,12 @@ export async function removeWallet({
   // Get current data
   const currentUser = (await db.user.findUnique({
     where: { address: session.address },
-    include: { addressWallets: true, customWallets: true, groups: true,webhooks:true },
+    include: {
+      addressWallets: true,
+      customWallets: true,
+      groups: true,
+      webhooks: true,
+    },
   }))!;
 
   // 1. Modify groups
@@ -159,27 +165,31 @@ export async function removeWallet({
   }
 
   // Webhooks
-  const webhookToUpdate=currentUser.webhooks.find(wh=>wh.addresses.includes(walletId))
-  if (webhookToUpdate){
+  const webhookToUpdate = currentUser.webhooks.find((wh) =>
+    wh.addresses.includes(walletId)
+  );
+  if (webhookToUpdate) {
     const payload: UpdatePayload = {
       "eth-mainnet": { create: null, delete: null, update: null },
       "polygon-mainnet": { create: null, delete: null, update: null },
     };
-    if (webhookToUpdate.addresses.length>=2){
+    if (webhookToUpdate.addresses.length >= 2) {
       // Update
-      payload[webhookToUpdate.network as (typeof appSettings.chains)[number]["alchemyMainnet"]].update = {
+      payload[
+        webhookToUpdate.network as (typeof appSettings.chains)[number]["alchemyMainnet"]
+      ].update = {
         webhookId: webhookToUpdate.id,
         addressesToAdd: [],
         addressesToRemove: [walletId],
       };
-      
-    }else{
+    } else {
       // Delete case
-      payload[webhookToUpdate.network as (typeof appSettings.chains)[number]["alchemyMainnet"]].delete = { webhookId: webhookToUpdate.id };
-
+      payload[
+        webhookToUpdate.network as (typeof appSettings.chains)[number]["alchemyMainnet"]
+      ].delete = { webhookId: webhookToUpdate.id };
     }
     // update on alchemy and db
-    await updateWebhooks(payload)
+    await updateWebhooks(payload);
   }
 
   // 2.Update User
@@ -187,14 +197,18 @@ export async function removeWallet({
   switch (type) {
     case "AddressWallet":
       {
-        
         // Disconnect to related addressWallet without remove it
         updatedUser = await db.user.update({
           where: { address: session.address },
           data: {
             addressWallets: { disconnect: { address: walletId } },
           },
-          include: { addressWallets: true, customWallets: true, groups: true,webhooks:true },
+          include: {
+            addressWallets: true,
+            customWallets: true,
+            groups: true,
+            webhooks: true,
+          },
         });
       }
 
@@ -207,7 +221,12 @@ export async function removeWallet({
           data: {
             customWallets: { delete: { id: walletId } },
           },
-          include: { addressWallets: true, customWallets: true, groups: true,webhooks:true },
+          include: {
+            addressWallets: true,
+            customWallets: true,
+            groups: true,
+            webhooks: true,
+          },
         });
       }
       break;
@@ -380,11 +399,7 @@ export async function fetchTokensWallet(address: string) {
   //AAVE
   // Fetch safetyModule
   console.log("[Fetch] Aave Safety Module");
-  const safetyModule = (await (
-    await fetch(
-      `http://localhost:3000/api/aave?query=safetyModule&address=${address}`
-    )
-  ).json()) as AddressWallet["defi"]["aaveSafetyModule"];
+  const safetyModule = await fetchAaveSafetyModule(address);
   // Push coinDataId for fetching
   for (const stakedToken of Object.values(safetyModule)) {
     if (stakedToken.stakeTokenUserBalance != "0")
@@ -393,12 +408,7 @@ export async function fetchTokensWallet(address: string) {
 
   // Fetch aave Pools
   console.log("[Fetch] Aave Pools");
-  const aavePools = (await (
-    await fetch(`http://localhost:3000/api/aave?query=pools&address=${address}`)
-  ).json()) as {
-    aaveV2: AddressWallet["defi"]["aaveV2"];
-    aaveV3: AddressWallet["defi"]["aaveV3"];
-  };
+  const aavePools = await fetchAavePools(address);
   const aTokensContractAddressToRemove: string[] = [];
   // Push coinDataId for fetching
   for (const chains of Object.values(aavePools)) {

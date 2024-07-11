@@ -10,8 +10,8 @@
     "prod": "prisma migrate deploy && node server.js"
   },
   "dependencies": {
-    "@aave/contract-helpers": "^1.24.0",
     "@aave/math-utils": "^1.24.0",
+    "@bgd-labs/aave-address-book": "^2.30.0",
     "@chakra-ui/next-js": "^2.2.0",
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.11.3",
@@ -21,7 +21,6 @@
     "alchemy-sdk": "^3.1.2",
     "bignumber.js": "^9.1.2",
     "chart.js": "^4.4.1",
-    "ethers": "5",
     "framer-motion": "^11.0.5",
     "iron-session": "^8.0.1",
     "next": "14.1.0",

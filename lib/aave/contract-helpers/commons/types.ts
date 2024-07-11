@@ -1,0 +1,37 @@
+export enum ChainId {
+  mainnet = 1,
+  ropsten = 3,
+  rinkeby = 4,
+  goerli = 5,
+  kovan = 42,
+  xdai = 100,
+  polygon = 137,
+  mumbai = 80001,
+  avalanche = 43114,
+  fuji = 43113, // avalanche test network
+  arbitrum_one = 42161,
+  arbitrum_goerli = 421613,
+  arbitrum_sepolia = 421614,
+  fantom = 250,
+  fantom_testnet = 4002,
+  optimism = 10,
+  optimism_sepolia = 11155420,
+  harmony = 1666600000,
+  harmony_testnet = 1666700000,
+  zkevm_testnet = 1402,
+  sepolia = 11155111,
+  scroll_alpha = 534353,
+  scroll_sepolia = 534351,
+  scroll = 534352,
+  metis_andromeda = 1088,
+  base = 8453,
+  base_sepolia = 84532,
+  bnb = 56,
+}
+
+export enum Stake {
+  aave = "aave",
+  bpt = "bpt",
+  gho = "gho",
+  bptv2 = "bptv2",
+}
