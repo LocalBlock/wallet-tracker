@@ -3,10 +3,10 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { getIronSession } from "iron-session";
 import { SessionData, sessionOptions } from "@/app/session";
-import { appSettings } from "../appSettings";
 import { AaveBalance, BeefyBalance, ChainId } from "@/types";
 import { formatUnits } from "viem";
 import { AddressWallet, CoinData } from "@prisma/client";
+import { stakeConfig } from "@/lib/aave/stakeConfig";
 
 export async function getTokens(selectedWalletId: string[]) {
   // @ts-ignore for cookies()
@@ -126,7 +126,7 @@ export async function getDefi(selectedWalletId: string[]) {
     .reduce((acc, currentValue) => {
       Object.keys(acc).forEach((stakedTokenStr) => {
         const stakedToken =
-          stakedTokenStr as keyof typeof appSettings.defi.aave.stakeConfig.tokens;
+          stakedTokenStr as keyof typeof stakeConfig.tokens;
 
         acc[stakedToken].stakeTokenUserBalance = (
           BigInt(acc[stakedToken].stakeTokenUserBalance) +

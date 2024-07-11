@@ -214,6 +214,7 @@ export default async function handler(
     } else {
       res.status(400);
     }
+    res.status(200)
   }
   res.status(405);
 }
