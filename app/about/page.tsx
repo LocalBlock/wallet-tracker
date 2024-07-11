@@ -6,13 +6,22 @@ import {
   Text,
   Flex,
   UnorderedList,
+  Link,
+  Tooltip,
 } from "@chakra-ui/react";
-import React from "react";
+import { FaGithub } from "react-icons/fa6";
 
 export default function About() {
   return (
     <Flex maxWidth={"2xl"} margin={"auto"} direction={"column"} gap={6}>
-      <Box>Version : v{process.env.NEXT_PUBLIC_APP_VERSION}</Box>
+      <Flex alignItems={"center"}>
+        Version : v{process.env.NEXT_PUBLIC_APP_VERSION} &nbsp;
+        <Link href="https://github.com/LocalBlock/wallet-tracker" isExternal>
+          <Tooltip label="Github repository" placement="right">
+            <FaGithub size={23} />
+          </Tooltip>
+        </Link>
+      </Flex>
       <Flex direction={"column"} gap={2}>
         <Heading as={"h3"} size={"lg"}>
           About this application
