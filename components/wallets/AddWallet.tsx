@@ -1,4 +1,5 @@
 import { addAddressWallet, addCustomWallet } from "@/app/actions/wallet";
+import { fetchEnsAddress } from "@/lib/alchemy";
 import {
   Button,
   FormControl,
@@ -46,6 +47,9 @@ export default function AddWallet({ currentAddressWallet }: Props) {
     onSuccess: (data) => {
       queryClient.setQueryData(["user"], data);
     },
+    onError: (error, variable) => {
+      toast({ title: error.name, description: error.message });
+    },
   });
 
   const mutationCustomWallet = useMutation({
@@ -54,7 +58,6 @@ export default function AddWallet({ currentAddressWallet }: Props) {
       queryClient.setQueryData(["user"], data);
     },
   });
-
 
   let errorMessage = "";
   //Regex for ENS Name
@@ -106,17 +109,10 @@ export default function AddWallet({ currentAddressWallet }: Props) {
     switch (type) {
       case "addressWallet":
         setIsLoading(true);
-        let ens = null;
-        let address: string | null;
         if (ensRegex.test(inputAddress)) {
-          ens = inputAddress;
           setIsLoadingText("Resovling ENS");
-          address = (await (
-            await fetch(
-              `/api/alchemy/core?sdkMethod=resolveEns&ens=${ens}`
-            )
-          ).json()) as string;
-          if (!address) {
+          const resolvedAddress = await fetchEnsAddress(inputAddress);
+          if (!resolvedAddress) {
             toast({
               title: "Error",
               position: "top",
@@ -126,23 +122,43 @@ export default function AddWallet({ currentAddressWallet }: Props) {
               isClosable: true,
             });
             setIsLoading(false);
-            console.warn("Ens resolving failed")
+          } else {
+            // Add Wallet with ens and fetch
+            setIsLoadingText("Fetch balance");
+            await mutationAddAddressWallet.mutateAsync({
+              address: resolvedAddress,
+              ens: inputAddress,
+            });
+            // Reset states
+            setIsLoading(false);
+            setInputAddress("");
+            // Close Modal
+            onClose();
           }
-        } else address = inputAddress;
-        setIsLoadingText("Fetch balance");
-        await mutationAddAddressWallet.mutateAsync({ address, ens });
+        } else {
+          // Add Wallet without ENS and fetch
+          setIsLoadingText("Fetch balance");
+          await mutationAddAddressWallet.mutateAsync({
+            address: inputAddress,
+            ens: null,
+          });
+          // Reset states
+          setIsLoading(false);
+          setInputAddress("");
+          // Close Modal
+          onClose();
+        }
         break;
       case "customWallet":
         await mutationCustomWallet.mutateAsync(inputName);
+        // Reset states
+        setIsLoading(false);
+        setInputName("");
+        // Close Modal
+        onClose();
       default:
         break;
     }
-    // Reset states
-    setIsLoading(false);
-    setInputAddress("");
-    setInputName("");
-    // Close Modal
-    onClose();
   };
 
   return (

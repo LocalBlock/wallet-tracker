@@ -10,6 +10,7 @@ import { fetchBeefyVaults } from "@/lib/beefy";
 import { createCoinData, updateCoinData } from "./coinData";
 import { UpdatePayload, updateWebhooks } from "./webhook";
 import { fetchAavePools, fetchAaveSafetyModule } from "@/lib/aave";
+import { fetchNativeBalance, fetchTokensBalance } from "@/lib/alchemy";
 
 export async function addAddressWallet({
   address,
@@ -352,14 +353,9 @@ export async function fetchTokensWallet(address: string) {
   >[] = [];
 
   for await (const chain of appSettings.chains) {
-    console.log("[Fetch] tokens on", chain.id);
+    console.log("[Fetch] Tokens on", chain.name);
     // 1 fetch Native balance from alchemy
-    const nativeBalance = (await (
-      await fetch(
-        `http://localhost:3000/api/alchemy/core?sdkMethod=getNativeBalance&address=${address}&chainId=${chain.id}`
-      )
-    ).json()) as string;
-
+    const nativeBalance =await fetchNativeBalance(address,chain.alchemyMainnet)
     newNativeTokens.push({
       balance: nativeBalance,
       coinDataId: chain.tokenId,
@@ -369,14 +365,7 @@ export async function fetchTokensWallet(address: string) {
     allTokenIds.push(chain.tokenId);
 
     // 2 fetch tokens from alchemy
-    const { tokens, unIdentifiedTokens } = (await (
-      await fetch(
-        `http://localhost:3000/api/alchemy/core?sdkMethod=getAllTokenBalance&address=${address}&chainId=${chain.id}`
-      )
-    ).json()) as {
-      tokens: AddressWallet["tokens"];
-      unIdentifiedTokens: Omit<AddressWallet["tokens"][number], "coinDataId">[];
-    };
+    const { tokens, unIdentifiedTokens } = await fetchTokensBalance(address,chain.alchemyMainnet,chain.id)
 
     // Merge tokens Chain
     newTokens.push(...tokens);
