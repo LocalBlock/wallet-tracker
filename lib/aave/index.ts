@@ -2,7 +2,11 @@ import { getCoinlist } from "@/app/actions/coinData";
 import { appSettings } from "@/app/appSettings";
 import { AddressWallet } from "@prisma/client";
 // Custom version of @aave/contract-helpers which use Wagmi/view instead of ethers@5
-import { UiPoolDataProvider, UiStakeDataProviderV3 } from "./contract-helpers";
+import {
+  UiPoolDataProvider,
+  UiStakeDataProviderV3,
+  LegacyUiPoolDataProvider,
+} from "./contract-helpers";
 // But official version for math :)
 import { formatUserSummary, formatReserves } from "@aave/math-utils";
 import { poolConfig } from "./poolConfig";
@@ -103,10 +107,17 @@ export async function fetchAavePools(address: string) {
           poolConfig[version][chain.id].lendingPoolAddressProvider;
 
         // View contract used to fetch all reserves data (including market base currency data), and user reserves
-        const poolDataProviderContract = new UiPoolDataProvider({
-          uiPoolDataProviderAddress,
-          chainId: chain.chainIdMainnet,
-        });
+        // Use UiPoolDataProvider for AaveV3 otherwise use LegacyUiPoolDataProvider
+        const poolDataProviderContract =
+          version === "aaveV3"
+            ? new UiPoolDataProvider({
+                uiPoolDataProviderAddress,
+                chainId: chain.chainIdMainnet,
+              })
+            : new LegacyUiPoolDataProvider({
+                uiPoolDataProviderAddress,
+                chainId: chain.chainIdMainnet,
+              });
 
         const reserves = await poolDataProviderContract.getReservesHumanized({
           lendingPoolAddressProvider,

@@ -57,6 +57,8 @@ export interface ReservesData {
     eModeLabel: string;
     borrowableInIsolation: boolean;
     flashLoanEnabled: boolean;
+    virtualAccActive: boolean;
+    virtualUnderlyingBalance: bigint;
   }>;
   1: {
     marketReferenceCurrencyUnit: bigint;
@@ -142,6 +144,8 @@ export interface ReserveDataHumanized {
   eModeLabel: string;
   borrowableInIsolation: boolean;
   flashLoanEnabled: boolean;
+  virtualAccActive: boolean;
+  virtualUnderlyingBalance: string;
 }
 
 export interface ReservesDataHumanized {
