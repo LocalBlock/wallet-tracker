@@ -35,6 +35,8 @@ Choose witch method you prefer :
 ### Pre-requisites
 You need an **[APIKEY](https://docs.alchemy.com/docs/alchemy-quickstart-guide#1key-create-an-alchemy-key)** from Alchemy for fetching balance from blockchains and also an **[Auth Token](https://docs.alchemy.com/reference/notify-api-faq#where-do-i-find-my-alchemy-auth-token)** for notifications feature.
 
+If you want WalletConnect feature especially for login on mobile phone, create a **[Project ID](https://cloud.walletconnect.com)**
+
 ### Local developement server
 1. Download or clone this repo.
 
@@ -44,6 +46,9 @@ DATABASE_URL="postgresql://wallet-tracker:YOUR_DATABASE_PASSWWORD@localhost:5432
 
 ALCHEMY_APIKEY=YOUR_APIKEY
 ALCHEMY_AUTHTOKEN=YOUR_AUTHTOKEN
+
+# WalletConnect - Optional
+NEXT_PUBLIC_WALLETCONNECT_PROJECTID=YOUR_PROJECTID
 
 # Iron Session - Private key used to encrypt the cookie. It has to be at least 32 characters long
 SESSION_PASSWORD=YOUR_SESSION_PASSWORD
@@ -69,13 +74,14 @@ yarn dev
 ```yaml
 version: "3"
 services:
-  wallet-tracker:
+  web:
     image: ghcr.io/localblock/wallet-tracker
     environment:
-      - DATABASE_URL=YOUR_DATABASE_URL # postgresql://wallet-tracker:YOUR_DATABASE_PASSWWORD@localhost:5432/wallet-tracker?schema=public
+      - DATABASE_URL=YOUR_DATABASE_URL # postgresql://wallet-tracker:YOUR_DATABASE_PASSWWORD@database:5432/wallet-tracker?schema=public
       - SESSION_PASSWORD=YOUR_SESSION_PASSWORD # Iron Session - Private key used to encrypt the cookie. It has to be at least 32 characters long
       - ALCHEMY_APIKEY=YOUR_APIKEY # From Alchemy dashboard
       - ALCHEMY_AUTHTOKEN=YOUR_AUTHTOKEN # From Alchemy dashboard
+      - NEXT_PUBLIC_WALLETCONNECT_PROJECTID=YOUR_PROJECTID # Optional, from https://cloud.walletconnect.com/
     restart: always
     ports:
       - 3000:3000
