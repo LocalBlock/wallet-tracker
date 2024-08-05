@@ -88,31 +88,32 @@ export async function getTokens(selectedWalletId: string[]) {
 
   // add coinData
   const coinsData = await db.coinData.findMany();
-  const ignoreAsset: string[] = [];
-  const allAsset = [...mergeNativeTokens, ...mergeTokens, ...mergeCoins].map(
-    (asset) => {
-      const coinData = coinsData.find((cd) => cd.id === asset.coinDataId);
-      if (coinData) {
-        return {
-          ...asset,
-          name: coinData.name,
-          symbol: coinData.symbol,
-          image: coinData.image,
-          price: coinData.price,
-          sparkline_in_7d: coinData.sparkline_in_7d,
-        };
-      } else {
-        // to skip this asset, because there is no coindata, error on fetch price?
-        ignoreAsset.push(asset.coinDataId);
-        return {
-          ...asset,
-        };
-      }
-    }
-  );
+  const allAsset: {
+    chain: string;
+    balance: string;
+    coinDataId: string;
+    name: string;
+    symbol: string;
+    image: string;
+    price: (typeof coinsData)[number]["price"];
+    sparkline_in_7d: (typeof coinsData)[number]["sparkline_in_7d"];
+  }[] = [];
 
-  // return complete asset data only
-  return allAsset.filter((a) => !ignoreAsset.includes(a.coinDataId));
+  [...mergeNativeTokens, ...mergeTokens, ...mergeCoins].forEach((asset) => {
+    const coinData = coinsData.find((cd) => cd.id === asset.coinDataId);
+    // add asset only if coindata exist
+    if (coinData)
+      allAsset.push({
+        ...asset,
+        name: coinData.name,
+        symbol: coinData.symbol,
+        image: coinData.image,
+        price: coinData.price,
+        sparkline_in_7d: coinData.sparkline_in_7d,
+      });
+  });
+
+  return allAsset;
 }
 
 export async function getDefi(selectedWalletId: string[]) {
