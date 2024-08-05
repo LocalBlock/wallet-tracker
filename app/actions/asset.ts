@@ -88,23 +88,31 @@ export async function getTokens(selectedWalletId: string[]) {
 
   // add coinData
   const coinsData = await db.coinData.findMany();
+  const ignoreAsset: string[] = [];
   const allAsset = [...mergeNativeTokens, ...mergeTokens, ...mergeCoins].map(
     (asset) => {
-      // Coin data must exist
-      const coinData = coinsData.find((cd) => cd.id === asset.coinDataId)!;
-
-      return {
-        ...asset,
-        name: coinData.name,
-        symbol: coinData.symbol,
-        image: coinData.image,
-        price: coinData.price,
-        sparkline_in_7d: coinData.sparkline_in_7d,
-      };
+      const coinData = coinsData.find((cd) => cd.id === asset.coinDataId);
+      if (coinData) {
+        return {
+          ...asset,
+          name: coinData.name,
+          symbol: coinData.symbol,
+          image: coinData.image,
+          price: coinData.price,
+          sparkline_in_7d: coinData.sparkline_in_7d,
+        };
+      } else {
+        // to skip this asset, because there is no coindata, error on fetch price?
+        ignoreAsset.push(asset.coinDataId);
+        return {
+          ...asset,
+        };
+      }
     }
   );
 
-  return allAsset;
+  // return complete asset data only
+  return allAsset.filter((a) => !ignoreAsset.includes(a.coinDataId));
 }
 
 export async function getDefi(selectedWalletId: string[]) {
@@ -125,8 +133,7 @@ export async function getDefi(selectedWalletId: string[]) {
     .map((aw) => aw.defi.aaveSafetyModule)
     .reduce((acc, currentValue) => {
       Object.keys(acc).forEach((stakedTokenStr) => {
-        const stakedToken =
-          stakedTokenStr as keyof typeof stakeConfig.tokens;
+        const stakedToken = stakedTokenStr as keyof typeof stakeConfig.tokens;
 
         acc[stakedToken].stakeTokenUserBalance = (
           BigInt(acc[stakedToken].stakeTokenUserBalance) +
@@ -153,10 +160,7 @@ export async function getDefi(selectedWalletId: string[]) {
       );
       // Incentives => Aave Token
       const formatteduserIncentivesToClaim = Number(
-        formatUnits(
-          BigInt(safetyModule.userIncentivesToClaim),
-          18
-        )
+        formatUnits(BigInt(safetyModule.userIncentivesToClaim), 18)
       );
       return {
         ...safetyModule,
@@ -164,7 +168,7 @@ export async function getDefi(selectedWalletId: string[]) {
         symbol: cd.symbol,
         image: cd.image,
         balance: formattedStakeTokenUserBalance,
-        balanceToClaim:formatteduserIncentivesToClaim,
+        balanceToClaim: formatteduserIncentivesToClaim,
         // Safety module is only ethereum
         chain: "ethereum",
         price: cd.price,

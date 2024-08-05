@@ -1,7 +1,7 @@
 import { Network } from "alchemy-sdk";
 
 export const appSettings = {
-  fetchDelayCoinList: 30 * 24 * 60 * 60 * 1000, // 30 days
+  fetchDelayCoinList: 7 * 24 * 60 * 60 * 1000, // 7 days
   fetchDelayRequest: 1000, // 1 seconds
   intervalCheck: 2 * 60 * 1000, // 2 minutes,
   fetchDelayBalance: 1 * 60 * 60 * 1000, //1 hour

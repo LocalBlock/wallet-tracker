@@ -37,25 +37,28 @@ export async function getCoinlist() {
 
 // COINDATA
 export async function createCoinData(coinIds: string[]) {
-  console.log(`[Fetch] new CoinData`,coinIds.length);
-
-  // Fetch Market
-  const newDataMarket = await fetchCoinsMarket(coinIds);
-  //Fetch price
-  const newDataPrice = await fetchCoinsPrice(coinIds);
-  // New Data for Prisma
-  const newData = newDataMarket.map((dataMarket) => {
-    return {
-      id: dataMarket.id,
-      name: dataMarket.name,
-      symbol: dataMarket.symbol,
-      image: dataMarket.image,
-      last_updated: dataMarket.last_updated,
-      sparkline_in_7d: dataMarket.sparkline_in_7d,
-      price: newDataPrice[dataMarket.id],
-    };
-  });
-  await db.coinData.createMany({ data: newData });
+  console.log(`[Fetch] new CoinData`, coinIds.length);
+  try {
+    // Fetch Market
+    const newDataMarket = await fetchCoinsMarket(coinIds);
+    //Fetch price
+    const newDataPrice = await fetchCoinsPrice(coinIds);
+    // New Data for Prisma
+    const newData = newDataMarket.map((dataMarket) => {
+      return {
+        id: dataMarket.id,
+        name: dataMarket.name,
+        symbol: dataMarket.symbol,
+        image: dataMarket.image,
+        last_updated: dataMarket.last_updated,
+        sparkline_in_7d: dataMarket.sparkline_in_7d,
+        price: newDataPrice[dataMarket.id],
+      };
+    });
+    await db.coinData.createMany({ data: newData });
+  } catch (error) {
+    console.log("[Fetch] new CoinData", error);
+  }
   //return updated allCoinData
   return db.coinData.findMany();
 }
@@ -84,23 +87,28 @@ export async function updateCoinData(coinIds: string[]) {
     const newDataPrice = await fetchCoinsPrice(coinIds);
 
     // update Coins
-    console.log(`[Fetch] CoinData`,coinIds.length);
+    console.log(`[Fetch] CoinData`, coinIds.length);
     for await (const id of coinIds) {
       const newCoinData = newDataMarket.find(
         (coinMarketData) => coinMarketData.id === id
-      )!;
-
-      await db.coinData.update({
-        where: { id: newCoinData.id },
-        data: {
-          name: newCoinData.name,
-          symbol: newCoinData.symbol,
-          image: newCoinData.image,
-          last_updated: newCoinData.last_updated,
-          sparkline_in_7d: newCoinData.sparkline_in_7d,
-          price: newDataPrice[id],
-        },
-      });
+      );
+      if (newCoinData) {
+        await db.coinData.update({
+          where: { id: newCoinData.id },
+          data: {
+            name: newCoinData.name,
+            symbol: newCoinData.symbol,
+            image: newCoinData.image,
+            last_updated: newCoinData.last_updated,
+            sparkline_in_7d: newCoinData.sparkline_in_7d,
+            price: newDataPrice[id],
+          },
+        });
+      } else {
+        console.log(
+          `[Fetch] CoinData : ${id} not found on dataMarket, skipping update`
+        );
+      }
     }
   } catch (error) {
     console.log(error);
