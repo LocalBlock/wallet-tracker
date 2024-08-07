@@ -15,7 +15,7 @@ export default function About() {
   return (
     <Flex maxWidth={"2xl"} margin={"auto"} direction={"column"} gap={6}>
       <Flex alignItems={"center"}>
-        Version : v{process.env.NEXT_PUBLIC_APP_VERSION} &nbsp;
+        Version : {process.env.npm_package_version} &nbsp;
         <Link href="https://github.com/LocalBlock/wallet-tracker" isExternal>
           <Tooltip label="Github repository" placement="right">
             <FaGithub size={23} />

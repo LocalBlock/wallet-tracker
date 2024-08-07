@@ -52,9 +52,6 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECTID=YOUR_PROJECTID
 
 # Iron Session - Private key used to encrypt the cookie. It has to be at least 32 characters long
 SESSION_PASSWORD=YOUR_SESSION_PASSWORD
-
-# Application Version
-NEXT_PUBLIC_APP_VERSION=$npm_package_version
 ```
 3. Install an run database
 
