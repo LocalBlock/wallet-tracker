@@ -1,8 +1,8 @@
 "use client";
 import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from "wagmi";
-import { config } from "./wagmi";
+import { type State, WagmiProvider } from "wagmi";
+import { getConfig } from "./wagmi";
 import { useEffect, useState } from "react";
 import theme from "@/theme/theme";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -35,9 +35,19 @@ function getQueryClient() {
   }
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  initialState,
+  wcProjectId,
+}: {
+  children: React.ReactNode;
+  initialState?: State;
+  wcProjectId?: string;
+}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  const [config] = useState(() => getConfig(wcProjectId));
 
   // NOTE: Avoid useState when initializing the query client if you don't
   //       have a suspense boundary between this and the code that may
@@ -46,7 +56,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
   return (
-    <WagmiProvider config={config}>
+    <WagmiProvider config={config} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
         <ChakraProvider theme={theme}>
           <ColorModeScript initialColorMode={theme.config.initialColorMode} />
