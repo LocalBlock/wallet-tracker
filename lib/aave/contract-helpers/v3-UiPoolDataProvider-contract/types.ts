@@ -6,21 +6,21 @@ export interface ReservesData {
     underlyingAsset: string;
     name: string;
     symbol: string;
-    decimals: BigInt;
-    baseLTVasCollateral: BigInt;
-    reserveLiquidationThreshold: BigInt;
-    reserveLiquidationBonus: BigInt;
-    reserveFactor: BigInt;
+    decimals: bigint;
+    baseLTVasCollateral: bigint;
+    reserveLiquidationThreshold: bigint;
+    reserveLiquidationBonus: bigint;
+    reserveFactor: bigint;
     usageAsCollateralEnabled: boolean;
     borrowingEnabled: boolean;
     stableBorrowRateEnabled: boolean;
     isActive: boolean;
     isFrozen: boolean;
-    liquidityIndex: BigInt;
-    variableBorrowIndex: BigInt;
-    liquidityRate: BigInt;
-    variableBorrowRate: BigInt;
-    stableBorrowRate: BigInt;
+    liquidityIndex: bigint;
+    variableBorrowIndex: bigint;
+    liquidityRate: bigint;
+    variableBorrowRate: bigint;
+    stableBorrowRate: bigint;
     lastUpdateTimestamp: number;
     aTokenAddress: string;
     stableDebtTokenAddress: string;
@@ -71,7 +71,7 @@ export interface ReservesData {
 export interface UserReserveData {
   0: ReadonlyArray<{
     underlyingAsset: string;
-    scaledATokenBalance: BigInt;
+    scaledATokenBalance: bigint;
     usageAsCollateralEnabledOnUser: boolean;
     stableBorrowRate: bigint;
     scaledVariableDebt: bigint;

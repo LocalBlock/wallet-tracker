@@ -19,7 +19,7 @@ export async function updateWebhookStatus({
   webhookIds: string[];
   isActive: boolean;
 }) {
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
   const config: AlchemySettings = {
     authToken: process.env.ALCHEMY_AUTHTOKEN,
@@ -65,7 +65,7 @@ export type UpdatePayload = {
 };
 
 export async function updateWebhooks(payload: UpdatePayload) {
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   const createdWebhooks: (AddressActivityWebhook & { addresses: string[] })[] =

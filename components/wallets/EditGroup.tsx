@@ -44,7 +44,7 @@ export default function EditGroup({ groupId }: Props) {
     },
   })
 
-  const initialGroup = user?.groups.find((group) => group.id === groupId)!;
+  const initialGroup = user!.groups.find((group) => group.id === groupId)!;
   const [groupName, setGroupName] = useState(initialGroup.name);
   const [selectedWallets, setSelectedWallets] = useState<string[]>(
     initialGroup.walletIds

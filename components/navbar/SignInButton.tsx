@@ -2,7 +2,7 @@ import { Button } from "@chakra-ui/react";
 import Image from "next/image";
 import siweLogo from "@/public/SIWE_Logomark_Gradient.png";
 import React, { useEffect, useState } from "react";
-import { createSiweMessage, parseSiweMessage } from "viem/siwe";
+import { createSiweMessage } from "viem/siwe";
 import { Address } from "viem";
 import { useSignMessage } from "wagmi";
 import useSession from "@/hooks/useSession";

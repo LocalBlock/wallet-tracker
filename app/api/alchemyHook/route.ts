@@ -22,11 +22,12 @@ export async function POST(req: Request) {
   clearTimeout(timer);
   // Set new timeout
   timer = setTimeout(async () => {
-
     // Sen to socket
     await fetch("http://localhost:3000/api/socket/notifications", {
       method: "POST",
-      body:JSON.stringify(await parseIncomingNotification(incomingNotifications))
+      body: JSON.stringify(
+        await parseIncomingNotification(incomingNotifications)
+      ),
     });
 
     // clear incomingNotifications
@@ -59,11 +60,10 @@ async function parseIncomingNotification(
     return acc;
   }, [] as IncomingNotifications[]);
 
-  
   //Analyse transactions and build result
   const result: Notification[] = [];
   const coinList = await getCoinlist();
-  const coinsData= await db.coinData.findMany()
+  const coinsData = await db.coinData.findMany();
   for await (const tx of transactions) {
     // get user address
     const userWebhook = await db.webhook.findUnique({
@@ -76,15 +76,18 @@ async function parseIncomingNotification(
 
     if (!userWebhook || !chain) {
       // Received tx notification without user! not possible
-      !userWebhook &&
+      if (!userWebhook)
         console.warn(`No user for this incoming Notification ${tx.webhookId}`);
-      !chain &&
+
+      if (!chain)
         console.warn(
           `No chain in for this incoming Notification ${tx.webhookId}`
         );
     } else {
       // Analyse each activity
-      const addressesLowerCase=userWebhook.addresses.map(address=>address.toLowerCase())
+      const addressesLowerCase = userWebhook.addresses.map((address) =>
+        address.toLowerCase()
+      );
       const parsedTransfer: PrismaJson.AssetNotifications = [];
       const parsedSent: PrismaJson.AssetNotifications = [];
       const parsedReceived: PrismaJson.AssetNotifications = [];
@@ -97,7 +100,8 @@ async function parseIncomingNotification(
                 (cl) => cl.platforms[chain.id] === activity.rawContract.address
               )?.id;
               //Create CoinData if not exist in db
-              if (coinId&&!coinsData.find(cd=>cd.id===coinId)) await createCoinData([coinId])
+              if (coinId && !coinsData.find((cd) => cd.id === coinId))
+                await createCoinData([coinId]);
 
               const parsedActivity = {
                 coinDataId: coinId,

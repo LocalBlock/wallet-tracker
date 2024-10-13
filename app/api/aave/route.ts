@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const address = searchParams.get("address");
 
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
   if (!session.isLoggedIn) {
     return NextResponse.json<Error>(

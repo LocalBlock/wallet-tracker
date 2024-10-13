@@ -6,7 +6,7 @@ import { SessionData, sessionOptions } from "@/app/session";
 
 export async function getUserData() {
   const session = await getIronSession<SessionData>(
-    // @ts-ignore for cookies()
+    // @ts-expect-error for cookies()
     cookies(),
     sessionOptions
   );
@@ -36,7 +36,7 @@ export async function updateSelectedWallet({
   selectedWalletId: string | null;
   selectedGroupId: string | null;
 }) {
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   return await db.user.update({
@@ -55,7 +55,7 @@ export async function updateSelectedWallet({
 }
 
 export async function updateSelectedCurrency(newCurrency: string) {
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   return await db.user.update({
@@ -77,7 +77,7 @@ export async function createGroup({
   name: string;
   walletIds: string[];
 }) {
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   return await db.user.update({
@@ -101,7 +101,7 @@ export async function updateGroup({
   name: string;
   walletIds: string[];
 }) {
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
   return await db.user.update({
     where: { address: session.address },
@@ -118,7 +118,7 @@ export async function updateGroup({
 }
 
 export async function removeGroup(groupId: string) {
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   await db.group.delete({ where: { id: groupId } });
@@ -177,7 +177,7 @@ export async function removeGroup(groupId: string) {
 }
 
 export async function updateSelectedChains(newSelectedChains: string[]) {
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
   const updatedUser = await db.user.update({
     where: { address: session.address },

@@ -17,8 +17,8 @@ import {
   useColorMode,
   useTheme,
   useToken,
+  useSize
 } from "@chakra-ui/react";
-import { useSize } from "@chakra-ui/react-use-size";
 import { formatBalanceCurrency, formatBalanceChange } from "@/lib/utils";
 
 import { FetchCoinMarket, FetchCoinPrices } from "@/types";

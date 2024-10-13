@@ -11,7 +11,7 @@ export type PricesAPIResult = {
 
 export async function POST(request: NextRequest) {
   const coinIds = (await request.json()) as string[];
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
   if (!session.isLoggedIn) {
     return NextResponse.json<Error>(

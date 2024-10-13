@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const address = searchParams.get("address");
 
-  // @ts-ignore for cookies()
+  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   if (!session.isLoggedIn) {
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   }
   try {
     const newNativeTokens: BalanceAPIResult["nativeTokens"] = [];
-    let newTokens: BalanceAPIResult["tokens"] = [];
+    const newTokens: BalanceAPIResult["tokens"] = [];
     // For each chains in appsettings
     for await (const chain of appSettings.chains) {
       // Native balance

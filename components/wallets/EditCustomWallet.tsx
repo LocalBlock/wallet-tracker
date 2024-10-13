@@ -63,7 +63,7 @@ export default function EditCustomWallet({ wallet}: Props) {
 
 
   const initialCoinList = wallet.coins.map((coin) => {
-    const data = coinsData?.find((coinD) => coinD.id === coin.coinDataId)!;
+    const data = coinsData!.find((coinD) => coinD.id === coin.coinDataId)!;
     return {
       balance: coin.balance,
       coinDataId: coin.coinDataId,
