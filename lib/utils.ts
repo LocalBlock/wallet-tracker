@@ -21,11 +21,10 @@ export function isExpired(lastUpdate: Date, delay: number) {
  * @param ens Ens
  * @returns short address 0x1234...1234 or Ens if set
  */
-export function displayName(address: string,ens:string|null) {
-  if (ens) return ens
+export function displayName(address: string, ens: string | null) {
+  if (ens) return ens;
   return address.slice(0, 6) + "..." + address.slice(-4);
 }
-
 
 /**
  * Format percentage change and balance change
@@ -155,6 +154,9 @@ export function getAllIds(addressWallet: AddressWallet) {
   addressWallet.defi.beefy.forEach((vault) => {
     vault.tokens.forEach((token) => allIds.push(token.id));
   });
+  // Add USDC coin if there is beefy data
+  if (addressWallet.defi.beefy.length != 0) allIds.push("usd-coin");
+
   // Remove duplicate
-  return Array.from(new Set(allIds))
+  return Array.from(new Set(allIds));
 }

@@ -6,11 +6,7 @@ import { getIronSession } from "iron-session";
 import { SessionData, sessionOptions } from "@/app/session";
 import { WalletType } from "@/types";
 import { AddressWallet, CustomWallet } from "@prisma/client";
-import { fetchBeefyVaults } from "@/lib/beefy";
-import { createCoinData, updateCoinData } from "./coinData";
 import { UpdatePayload, updateWebhooks } from "./webhook";
-import { fetchAavePools, fetchAaveSafetyModule } from "@/lib/aave";
-import { fetchNativeBalance, fetchTokensBalance } from "@/lib/alchemy";
 
 export async function addAddressWallet({
   address,
@@ -54,18 +50,10 @@ export async function addAddressWallet({
     });
   }
 
-  // fetch tokens
-  let { updatedUser, allIdsFetched } = await fetchTokensWallet(address);
-
   if (addressWalletCount + customWalletCount === 0) {
     // First wallet make it selected
-    updatedUser = await updateSelectedWallet(address);
+    await updateSelectedWallet(address);
   }
-
-  // Update data
-  await updateCoinData(allIdsFetched);
-
-  return updatedUser;
 }
 
 export async function addCustomWallet(name: string) {
@@ -277,30 +265,20 @@ export async function removeWallet({
   return updatedUser;
 }
 
-export async function updateAddressWallet(
-  address: string,
-  nativeTokens: AddressWallet["nativeTokens"],
-  tokens: AddressWallet["tokens"],
-  defi: AddressWallet["defi"]
-) {
-  // @ts-ignore for cookies()
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
-  return await db.user.update({
-    where: { address: session.address },
-    data: {
-      addressWallets: {
-        update: {
-          where: { address },
-          data: { nativeTokens, tokens, defi, lastfetch: new Date() },
-        },
-      },
-    },
-    include: {
-      groups: true,
-      addressWallets: true,
-      customWallets: true,
-      webhooks: true,
-    },
+export async function updateAddressWallet({
+  address,
+  nativeTokens,
+  tokens,
+  defi,
+}: {
+  address: string;
+  nativeTokens: AddressWallet["nativeTokens"];
+  tokens: AddressWallet["tokens"];
+  defi: AddressWallet["defi"];
+}) {
+  return await db.addressWallet.update({
+    where: { address },
+    data: { nativeTokens, tokens, defi, lastfetch: new Date() },
   });
 }
 
@@ -341,114 +319,4 @@ export async function updateSelectedWallet(selectedWalletId: string) {
       webhooks: true,
     },
   });
-}
-
-export async function fetchTokensWallet(address: string) {
-  const allTokenIds: string[] = [];
-  const newNativeTokens: AddressWallet["nativeTokens"] = [];
-  let newTokens: AddressWallet["tokens"] = [];
-  const newUnIdentifiedTokens: Omit<
-    AddressWallet["tokens"][number],
-    "coinDataId"
-  >[] = [];
-
-  for await (const chain of appSettings.chains) {
-    console.log("[Fetch] Tokens on", chain.name);
-    // 1 fetch Native balance from alchemy
-    const nativeBalance =await fetchNativeBalance(address,chain.alchemyMainnet)
-    newNativeTokens.push({
-      balance: nativeBalance,
-      coinDataId: chain.tokenId,
-      chain: chain.id,
-    });
-
-    allTokenIds.push(chain.tokenId);
-
-    // 2 fetch tokens from alchemy
-    const { tokens, unIdentifiedTokens } = await fetchTokensBalance(address,chain.alchemyMainnet,chain.id)
-
-    // Merge tokens Chain
-    newTokens.push(...tokens);
-    newUnIdentifiedTokens.push(...unIdentifiedTokens);
-  }
-
-  // DEFI Step
-  // Beefy
-  console.log("[Fetch] Beefy");
-  // Get beeyVaults and mutate newTokens and newUnIdentifiedTokens
-  const beefyUserVaults = await fetchBeefyVaults(
-    newTokens,
-    newUnIdentifiedTokens
-  );
-  // Push coinDataId
-  beefyUserVaults.forEach((vault) => {
-    vault.tokens.forEach((token) => allTokenIds.push(token.id));
-  });
-
-  //AAVE
-  // Fetch safetyModule
-  console.log("[Fetch] Aave Safety Module");
-  const safetyModule = await fetchAaveSafetyModule(address);
-  // Push coinDataId for fetching
-  for (const stakedToken of Object.values(safetyModule)) {
-    if (stakedToken.stakeTokenUserBalance != "0")
-      allTokenIds.push(stakedToken.coinDataId);
-  }
-
-  // Fetch aave Pools
-  console.log("[Fetch] Aave Pools");
-  const aavePools = await fetchAavePools(address);
-  const aTokensContractAddressToRemove: string[] = [];
-  // Push coinDataId for fetching
-  for (const chains of Object.values(aavePools)) {
-    for (const aaveBalance of Object.values(chains)) {
-      aaveBalance.userReservesData.forEach((urd) => {
-        aTokensContractAddressToRemove.push(
-          urd.reserve.aTokenAddress.toLowerCase()
-        );
-        allTokenIds.push(urd.coinDataId);
-      });
-    }
-  }
-  // Remove atoken pools tokens
-  newTokens = newTokens.filter(
-    (token) => !aTokensContractAddressToRemove.includes(token.contractAddress)
-  );
-
-  // Now can push all newToken id
-  newTokens.forEach((token) => allTokenIds.push(token.coinDataId));
-
-  // Buid defi objetc
-  const defi = {
-    aaveSafetyModule: safetyModule,
-    aaveV2: aavePools.aaveV2,
-    aaveV3: aavePools.aaveV3,
-    beefy: beefyUserVaults,
-  };
-
-  // Save all Tokens to db
-  const updatedUser = await updateAddressWallet(
-    address,
-    newNativeTokens,
-    newTokens,
-    defi
-  );
-
-  // Remove duplicate Id
-  const allUniqueTokenIds = allTokenIds.filter(
-    (value, index) => allTokenIds.indexOf(value) === index
-  ); //remove duplicate
-
-  // check if new Coindata
-  const currentCoinDataIds = (await db.coinData.findMany()).map(
-    (ccd) => ccd.id
-  );
-  const coinIdsDataToCreate = allUniqueTokenIds.filter(
-    (id) => !currentCoinDataIds.includes(id)
-  );
-  if (coinIdsDataToCreate.length != 0) {
-    await createCoinData(coinIdsDataToCreate);
-  }
-
-  return { updatedUser, allIdsFetched: allUniqueTokenIds };
 }

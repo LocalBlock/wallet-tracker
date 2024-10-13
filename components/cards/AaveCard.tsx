@@ -1,5 +1,5 @@
-import { getDefi } from "@/app/actions/asset";
 import { appSettings } from "@/app/appSettings";
+import { getUserDefi } from "@/lib/assets";
 import {
   formatBalanceCurrency,
   formatBalanceToken,
@@ -15,7 +15,6 @@ import {
   CardBody,
   VStack,
   StackDivider,
-  SimpleGrid,
   Box,
   Flex,
 } from "@chakra-ui/react";
@@ -25,8 +24,8 @@ type Props = {
   currency: string;
   selectedChains: string[];
   data:
-    | Awaited<ReturnType<typeof getDefi>>["aaveV2"]
-    | Awaited<ReturnType<typeof getDefi>>["aaveV3"];
+    | Awaited<ReturnType<typeof getUserDefi>>["aaveV2"]
+    | Awaited<ReturnType<typeof getUserDefi>>["aaveV3"];
 };
 
 export default function AaveCard({
@@ -57,73 +56,68 @@ export default function AaveCard({
   );
 
   return (
-    totalBalance != 0 && (
-      <Card>
-        <CardHeader display={"flex"} alignItems={"center"} gap={5}>
-          <Image
-            boxSize={"55px"}
-            src={appSettings.defi.aave.image}
-            alt="Aave"
-          ></Image>
-          <Box>
-            <Heading size="md" paddingBottom={2}>
-              Aave&nbsp;{version} :{" "}
-              {formatBalanceCurrency(totalBalance, selectedCurrency)}
-            </Heading>
-          </Box>
-        </CardHeader>
-        <CardBody>
-          <VStack
-            align={"stretch"}
-            divider={<StackDivider borderColor="gray.200" />}
-          >
-            {aavePoolsFiltered.map((reserveData, index) => (
-              <Flex key={index} justifyContent={"space-between"}>
-                <Flex gap={3} align={"center"}>
-                    <Image
-                      src={reserveData.image}
-                      alt={reserveData.reserve.name}
-                      boxSize={"50px"}
-                    />
+    <Card>
+      <CardHeader display={"flex"} alignItems={"center"} gap={5}>
+        <Image
+          boxSize={"55px"}
+          src={appSettings.defi.aave.image}
+          alt="Aave"
+        ></Image>
+        <Box>
+          <Heading size="md" paddingBottom={2}>
+            Aave&nbsp;{version} :{" "}
+            {formatBalanceCurrency(totalBalance, selectedCurrency)}
+          </Heading>
+        </Box>
+      </CardHeader>
+      <CardBody>
+        <VStack
+          align={"stretch"}
+          divider={<StackDivider borderColor="gray.200" />}
+        >
+          {aavePoolsFiltered.map((reserveData, index) => (
+            <Flex key={index} justifyContent={"space-between"}>
+              <Flex gap={3} align={"center"}>
+                <Image
+                  src={reserveData.image}
+                  alt={reserveData.reserve.name}
+                  boxSize={"50px"}
+                />
+                <Box>
                   <Box>
-                    <Box>
-                      <b>
-                        {reserveData.reserve.name} {version}
-                      </b>
-                      &nbsp;
-                      <Tag variant={reserveData.chain}>
-                        {appSettings.chains.find(
-                          (chain) => chain.id === reserveData.chain
-                        )?.name ?? "MultiChains"}
-                      </Tag>
-                    </Box>
-                    <Box>
-                      {formatBalanceToken(
-                        Number(reserveData.underlyingBalance)
-                      ) +
-                        " " +
-                        reserveData.reserve.symbol.toUpperCase()}
-                    </Box>
-                  </Box>
-                </Flex>
-                <Box textAlign={"right"}>
-                  <Box>
-                    {formatBalanceCurrency(
-                      Number(reserveData.underlyingBalance) *
-                        reserveData.price[selectedCurrency],
-
-                      selectedCurrency
-                    )}
+                    <b>
+                      {reserveData.reserve.name} {version}
+                    </b>
+                    &nbsp;
+                    <Tag variant={reserveData.chain}>
+                      {appSettings.chains.find(
+                        (chain) => chain.id === reserveData.chain
+                      )?.name ?? "MultiChains"}
+                    </Tag>
                   </Box>
                   <Box>
-                    APY : {formatAPY(Number(reserveData.reserve.supplyAPY))}
+                    {formatBalanceToken(Number(reserveData.underlyingBalance)) +
+                      " " +
+                      reserveData.reserve.symbol.toUpperCase()}
                   </Box>
                 </Box>
               </Flex>
-            ))}
-          </VStack>
-        </CardBody>
-      </Card>
-    )
+              <Box textAlign={"right"}>
+                <Box>
+                  {formatBalanceCurrency(
+                    Number(reserveData.underlyingBalance) *
+                      reserveData.price[selectedCurrency],
+                    selectedCurrency
+                  )}
+                </Box>
+                <Box>
+                  APY : {formatAPY(Number(reserveData.reserve.supplyAPY))}
+                </Box>
+              </Box>
+            </Flex>
+          ))}
+        </VStack>
+      </CardBody>
+    </Card>
   );
 }

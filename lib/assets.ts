@@ -1,27 +1,21 @@
-"use server";
-import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { getIronSession } from "iron-session";
-import { SessionData, sessionOptions } from "@/app/session";
-import { AaveBalance, BeefyBalance, ChainId } from "@/types";
+import { AddressWallet, CoinData, CustomWallet } from "@prisma/client";
+import { stakeConfig } from "./aave/stakeConfig";
 import { formatUnits } from "viem";
-import { AddressWallet, CoinData } from "@prisma/client";
-import { stakeConfig } from "@/lib/aave/stakeConfig";
-
-export async function getTokens(selectedWalletId: string[]) {
-  // @ts-ignore for cookies()
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
-
+import { AaveBalance, BeefyBalance, ChainId } from "@/types";
+/**
+ * Merge tokens/coins asset between wallets (addressWallet/customWallet) and add coins Data (prices)
+ * @param selectedAddressWallets Selected address wallets array
+ * @param selectedCustomWallets Selected custom wallets array
+ * @returns All user assets
+ */
+export function getUserAssets(
+  selectedAddressWallets: AddressWallet[],
+  selectedCustomWallets: CustomWallet[],
+  coinsData: CoinData[]
+) {
   // ADDRESS WALLETS
-  const addressWalletsUserDb = await db.addressWallet.findMany({
-    where: {
-      users: { some: { address: session.address } },
-      address: { in: selectedWalletId },
-    },
-  });
-
   // Merge native tokens between wallet
-  const mergeNativeTokens = addressWalletsUserDb
+  const mergeNativeTokens = selectedAddressWallets
     .map((aw) => aw.nativeTokens)
     .reduce((acc, currentValue) => {
       currentValue.forEach((cv) => {
@@ -41,7 +35,7 @@ export async function getTokens(selectedWalletId: string[]) {
     }, []);
 
   // Merge tokens between wallets
-  const mergeTokens = addressWalletsUserDb
+  const mergeTokens = selectedAddressWallets
     .map((wallet) => wallet.tokens)
     .reduce((acc, currentValue) => {
       currentValue.forEach((cv) => {
@@ -61,12 +55,8 @@ export async function getTokens(selectedWalletId: string[]) {
     }, []);
 
   // CUSTOM WALLETS
-  const customWalletsUserDb = await db.customWallet.findMany({
-    where: { userAddress: session.address, id: { in: selectedWalletId } },
-  });
-
   // Merge Coins between Wallet, add property chain:null
-  const mergeCoins = customWalletsUserDb
+  const mergeCoins = selectedCustomWallets
     .map((wallet) => wallet.coins)
     .reduce((acc, currentValue) => {
       currentValue.forEach((cv) => {
@@ -87,7 +77,6 @@ export async function getTokens(selectedWalletId: string[]) {
     });
 
   // add coinData
-  const coinsData = await db.coinData.findMany();
   const allAsset: {
     chain: string;
     balance: string;
@@ -116,21 +105,32 @@ export async function getTokens(selectedWalletId: string[]) {
   return allAsset;
 }
 
-export async function getDefi(selectedWalletId: string[]) {
-  // @ts-ignore for cookies()
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
-
-  const addressWalletsUserDb = await db.addressWallet.findMany({
-    where: {
-      users: { some: { address: session.address } },
-      address: { in: selectedWalletId },
-    },
-  });
-
-  const coinsData = await db.coinData.findMany();
+/**
+ * Merge defi asset between wallets and add coins Data (prices)
+ * @param selectedAddressWallets
+ * @param coinsData
+ * @returns All user defi
+ */
+export function getUserDefi(
+  selectedAddressWallets: AddressWallet[],
+  coinsData: CoinData[]
+) {
+  //No addressWallets, probably a custom wallet, return an empty defi object
+  if (selectedAddressWallets.length === 0)
+    return {
+      aaveSafetymodule: [],
+      aaveV2: [],
+      aaveV3: [],
+      beefy: [],
+    };
 
   // AAVE SAFETY MODULE
-  const mergedSafetyModule = addressWalletsUserDb
+  // Deep cloning object with Json.parse() and Json.Stringify(), to avoid mutate original object
+  const selectedAddressWalletsClone = JSON.parse(
+    JSON.stringify(selectedAddressWallets)
+  ) as typeof selectedAddressWallets;
+
+  const mergedSafetyModule = selectedAddressWalletsClone
     .map((aw) => aw.defi.aaveSafetyModule)
     .reduce((acc, currentValue) => {
       Object.keys(acc).forEach((stakedTokenStr) => {
@@ -178,7 +178,11 @@ export async function getDefi(selectedWalletId: string[]) {
     });
 
   // AAVE POOLS
-  // merge one version
+  /**
+   * Merge Aave pool for on version
+   * @param aave
+   * @returns
+   */
   function mergeAavePoolsVersion(
     aave: AddressWallet["defi"]["aaveV2"][] | AddressWallet["defi"]["aaveV3"][]
   ) {
@@ -241,11 +245,11 @@ export async function getDefi(selectedWalletId: string[]) {
   }
 
   const mergedAavePoolsV2Array = mergeAavePoolsVersion(
-    addressWalletsUserDb.map((aw) => aw.defi.aaveV2)
+    selectedAddressWallets.map((aw) => aw.defi.aaveV2)
   );
 
   const mergedAavePoolsV3Array = mergeAavePoolsVersion(
-    addressWalletsUserDb.map((aw) => aw.defi.aaveV3)
+    selectedAddressWallets.map((aw) => aw.defi.aaveV3)
   );
 
   // BEEFY
@@ -254,7 +258,7 @@ export async function getDefi(selectedWalletId: string[]) {
     name: string;
   };
 
-  const mergedBeefyVaults = addressWalletsUserDb
+  const mergedBeefyVaults = selectedAddressWallets
     .map((aw) => aw.defi.beefy)
     .flat()
     .reduce((acc, currentValue) => {

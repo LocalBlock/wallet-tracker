@@ -19,30 +19,22 @@ import {
 
 import { appSettings } from "@/app/appSettings";
 import { FetchCoinPrices } from "@/types";
-import { getTokens } from "@/app/actions/asset";
-import { useQuery } from "@tanstack/react-query";
+import { getUserAssets } from "@/lib/assets";
 
 type Props = {
-  selectedWalletAddresIds: string[];
+  allAssets: ReturnType<typeof getUserAssets>;
   selectedChains: string[];
   currency: string;
 };
 
 export default function WalletCard({
-  selectedWalletAddresIds,
+  allAssets,
   selectedChains,
   currency,
 }: Props) {
   const selectedCurrency = currency as keyof FetchCoinPrices[number];
   const selectedCurrency_24h_change = (currency +
     "_24h_change") as keyof FetchCoinPrices[number];
-
-  const { data: allAssets } = useQuery({
-    queryKey: ["tokens", selectedWalletAddresIds],
-    queryFn: () => getTokens(selectedWalletAddresIds),
-  });
-  //console.log(tokens);
-  if (!allAssets) return null;
 
   //filter chain and if there is no price in coin data
   const assetFiltered = allAssets

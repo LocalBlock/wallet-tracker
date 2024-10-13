@@ -29,29 +29,22 @@ export async function getUserData() {
   return null;
 }
 
-export async function updateSelectedWallet(selectedWalletId: string) {
+export async function updateSelectedWallet({
+  selectedWalletId,
+  selectedGroupId,
+}: {
+  selectedWalletId: string | null;
+  selectedGroupId: string | null;
+}) {
   // @ts-ignore for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   return await db.user.update({
     where: { address: session.address },
-    data: { selectedWalletId: selectedWalletId, selectedGroupId: null },
-    include: {
-      groups: true,
-      addressWallets: true,
-      customWallets: true,
-      webhooks: true,
+    data: {
+      selectedWalletId: selectedWalletId,
+      selectedGroupId: selectedGroupId,
     },
-  });
-}
-
-export async function updateSelectedGroup(groupId: string) {
-  // @ts-ignore for cookies()
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
-
-  return await db.user.update({
-    where: { address: session.address },
-    data: { selectedWalletId: null, selectedGroupId: groupId },
     include: {
       groups: true,
       addressWallets: true,

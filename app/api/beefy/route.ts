@@ -1,39 +1,51 @@
+import { type NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { getIronSession } from "iron-session";
+import { SessionData, sessionOptions } from "@/app/session";
+import { type BeefyApy, BeefyBalance, BeefyLps, BeefyVault } from "@/types";
 import { getCoinlist } from "@/app/actions/coinData";
-import { BeefyApy, BeefyBalance, BeefyLps, BeefyVault } from "@/types";
-import { AddressWallet } from "@prisma/client";
+import { fetchTokensBalance } from "@/lib/alchemy";
 
-export async function fetchBeefyVaults(
-  tokens: AddressWallet["tokens"],
-  unIdentifiedTokens: Omit<AddressWallet["tokens"][number], "coinDataId">[]
-) {
-  const coinlist = await getCoinlist();
-  // Fetch Data
-  const vaultData = (await (
-    await fetch(`https://api.beefy.finance/vaults`)
-  ).json()) as BeefyVault[];
-  const apyData = (await (
-    await fetch(`https://api.beefy.finance/apy`)
-  ).json()) as BeefyApy;
-  const lpsData = (await (
-    await fetch(`https://api.beefy.finance/lps/breakdown`)
-  ).json()) as BeefyLps;
-  const beefyUserVaults: BeefyBalance[] = [];
+export type BeefyAPIResult = {
+  beefyUserVaults: BeefyBalance[];
+};
+export type BeefyAPIError = {
+  message: string;
+};
 
-  identify(tokens);
-  identify(unIdentifiedTokens);
-  console.log(
-    "[Fetch] Beefy : ",
-    beefyUserVaults.map((bf) => bf.id)
-  );
-  return beefyUserVaults;
+export async function POST(request: NextRequest) {
+  const allTokens = (await request.json()) as Awaited<
+    ReturnType<typeof fetchTokensBalance>
+  >;
+  // @ts-ignore for cookies()
+  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  if (!session.isLoggedIn) {
+    return NextResponse.json<Error>(
+      {
+        name: "Unauthorized",
+        message: "User not logged in",
+      },
+      {
+        status: 401,
+      }
+    );
+  }
+  try {
+    const coinlist = await getCoinlist();
+    const vaultData = (await (
+      await fetch(`https://api.beefy.finance/vaults`)
+    ).json()) as BeefyVault[];
+    const apyData = (await (
+      await fetch(`https://api.beefy.finance/apy`)
+    ).json()) as BeefyApy;
+    const lpsData = (await (
+      await fetch(`https://api.beefy.finance/lps/breakdown`)
+    ).json()) as BeefyLps;
 
-  function identify(
-    tokens:
-      | AddressWallet["tokens"]
-      | Omit<AddressWallet["tokens"][number], "coinDataId">[]
-  ) {
-    const filteredTokens = [];
-    for (const token of tokens) {
+    const beefyUserVaults: BeefyBalance[] = [];
+
+    //const filteredTokens = [];
+    for (const token of allTokens) {
       const findBeefyVault = vaultData.find(
         (vault) =>
           vault.earnContractAddress.toLocaleLowerCase() ===
@@ -140,32 +152,19 @@ export async function fetchBeefyVaults(
           console.log("[Ignore]", findBeefyVault.id, ignoreReason);
         }
       } else {
-        // All tokens without beefy vault
-        filteredTokens.push(token);
+        // Nothing
       }
     }
-    tokens = filteredTokens;
+
+    return NextResponse.json<BeefyAPIResult>({
+      beefyUserVaults,
+    });
+  } catch (error: any) {
+    return NextResponse.json<BeefyAPIError>(
+      {
+        message: error.message,
+      },
+      { status: error.status }
+    );
   }
-}
-
-export function mergeBeefyVaults(selectedBeefyVaults: BeefyBalance[]) {
-  //const result:BeefyBalance[]=[]
-  return selectedBeefyVaults.reduce((acc, currentValue) => {
-    const index = acc.findIndex((v) => v.id === currentValue.id);
-    if (index != -1) {
-      //merge
-      acc[index].currentBalance = (
-        Number(acc[index].currentBalance) + Number(currentValue.currentBalance)
-      ).toString();
-      acc[index].currentBalanceHarvest = (
-        Number(acc[index].currentBalanceHarvest) +
-        Number(currentValue.currentBalanceHarvest)
-      ).toString();
-    } else {
-      acc.push(currentValue);
-    }
-    //if(acc.)
-
-    return [...acc];
-  }, [] as BeefyBalance[]);
 }

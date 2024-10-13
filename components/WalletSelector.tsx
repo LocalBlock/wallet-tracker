@@ -8,11 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { useRef } from "react";
 import { FaChevronDown, FaCheck } from "react-icons/fa6";
-import {
-  getUserData,
-  updateSelectedGroup,
-  updateSelectedWallet,
-} from "@/app/actions/user";
+import { getUserData, updateSelectedWallet } from "@/app/actions/user";
 import { displayName } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -23,15 +19,8 @@ type Props = {
 export default function WalletSelector({ user }: Props) {
   const queryClient = useQueryClient();
 
-  const mutationWallet = useMutation({
+  const mutationSelectedWallet = useMutation({
     mutationFn: updateSelectedWallet,
-    onSuccess: (data) => {
-      queryClient.setQueryData(["user"], data);
-    },
-  });
-
-  const mutationGroup = useMutation({
-    mutationFn: updateSelectedGroup,
     onSuccess: (data) => {
       queryClient.setQueryData(["user"], data);
     },
@@ -77,7 +66,10 @@ export default function WalletSelector({ user }: Props) {
                 icon={isSelected ? <FaCheck /> : undefined}
                 key={wallet.address}
                 onClick={async () => {
-                  mutationWallet.mutate(wallet.address);
+                  mutationSelectedWallet.mutate({
+                    selectedWalletId: wallet.address,
+                    selectedGroupId: null,
+                  });
                 }}
               >
                 {displayName(wallet.address, wallet.ens)}
@@ -93,9 +85,10 @@ export default function WalletSelector({ user }: Props) {
                 icon={isSelected ? <FaCheck /> : undefined}
                 key={wallet.id}
                 onClick={async () => {
-                  await updateSelectedWallet(wallet.id);
-                  //refetch();
-                  mutationWallet.mutate(wallet.id);
+                  mutationSelectedWallet.mutate({
+                    selectedWalletId: wallet.id,
+                    selectedGroupId: null,
+                  });
                 }}
               >
                 {wallet.name}
@@ -113,7 +106,10 @@ export default function WalletSelector({ user }: Props) {
                 icon={isSelected ? <FaCheck /> : undefined}
                 key={group.id}
                 onClick={async () => {
-                  mutationGroup.mutate(group.id);
+                  mutationSelectedWallet.mutate({
+                    selectedWalletId: null,
+                    selectedGroupId: group.id,
+                  });
                 }}
               >
                 {group.name}

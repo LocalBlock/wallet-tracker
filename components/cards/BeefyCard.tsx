@@ -17,10 +17,10 @@ import {
 } from "@/lib/utils";
 import { appSettings } from "@/app/appSettings";
 import { FetchCoinPrices } from "@/types";
-import { getDefi } from "@/app/actions/asset";
+import { getUserDefi } from "@/lib/assets";
 
 type Props = {
-  data: Awaited<ReturnType<typeof getDefi>>["beefy"];
+  data: Awaited<ReturnType<typeof getUserDefi>>["beefy"];
   currency: string;
   selectedChains: string[];
 };
@@ -94,7 +94,6 @@ export default function BeefyCard({ data, selectedChains, currency }: Props) {
     totalBalanceBeefy +=
       Number(vault.currentBalanceHarvest) * vault.price[selectedCurrency];
   });
-  if (totalBalanceBeefy === 0) return null;
 
   return (
     <Card>

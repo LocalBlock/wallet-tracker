@@ -14,7 +14,6 @@ import { Chart } from "react-chartjs-2";
 import {
   Box,
   Heading,
-  Skeleton,
   useColorMode,
   useTheme,
   useToken,
@@ -23,9 +22,7 @@ import { useSize } from "@chakra-ui/react-use-size";
 import { formatBalanceCurrency, formatBalanceChange } from "@/lib/utils";
 
 import { FetchCoinMarket, FetchCoinPrices } from "@/types";
-
-import { useQuery } from "@tanstack/react-query";
-import { getDefi, getTokens } from "@/app/actions/asset";
+import { getUserAssets, getUserDefi } from "@/lib/assets";
 
 ChartJS.register(
   CategoryScale,
@@ -68,13 +65,15 @@ type ChartTokens = {
 };
 
 type Props = {
-  selectedWalletAddresIds: string[];
+  userAssets: ReturnType<typeof getUserAssets>;
+  userDefi: ReturnType<typeof getUserDefi>;
   selectedChains: string[];
   currency: string;
 };
 
 export default function ChartBalance({
-  selectedWalletAddresIds,
+  userAssets,
+  userDefi,
   selectedChains,
   currency,
 }: Props) {
@@ -82,20 +81,6 @@ export default function ChartBalance({
   const boxRef = useRef<HTMLDivElement>(null);
   const dimensions = useSize(boxRef); // To retreive dimensions fron div vhart container
   const [options, setOptions] = useState<ChartOptions>();
-
-  const { data: allTokens, isLoading: isLoadingTokens } = useQuery({
-    queryKey: ["tokens", selectedWalletAddresIds],
-    queryFn: () => getTokens(selectedWalletAddresIds),
-  });
-  const { data: defi, isLoading: isLoadingDefi } = useQuery({
-    queryKey: ["defi", selectedWalletAddresIds],
-    queryFn: () => getDefi(selectedWalletAddresIds),
-    enabled: selectedWalletAddresIds.some((walletId) =>
-      walletId.startsWith("0x")
-    ),
-  });
-
-  const isLoading = isLoadingTokens || isLoadingDefi;
 
   // use a custom hook to have color background from chakra theme
   const bgColorValue = useBackgroundColor();
@@ -156,7 +141,7 @@ export default function ChartBalance({
 
   // Tokens
   const tokens: ChartTokens[] = [];
-  allTokens
+  userAssets
     ?.filter(
       (asset) =>
         selectedChains.includes(asset.chain) || asset.chain === "custom"
@@ -173,8 +158,7 @@ export default function ChartBalance({
 
   // Defi
   const defiTokens: ChartTokens[] = [];
-
-  defi?.aaveSafetymodule
+  userDefi?.aaveSafetymodule
     .filter((sm) => selectedChains.includes(sm.chain))
     .forEach((sm) => {
       defiTokens.push({
@@ -185,7 +169,7 @@ export default function ChartBalance({
       });
     });
 
-  defi?.aaveV2
+  userDefi?.aaveV2
     .filter((ap) => selectedChains.includes(ap.chain))
     .forEach((ap) => {
       defiTokens.push({
@@ -197,7 +181,7 @@ export default function ChartBalance({
       });
     });
 
-  defi?.aaveV3
+  userDefi?.aaveV3
     .filter((ap) => selectedChains.includes(ap.chain))
     .forEach((ap) => {
       defiTokens.push({
@@ -209,7 +193,7 @@ export default function ChartBalance({
       });
     });
 
-  defi?.beefy
+  userDefi?.beefy
     .filter((bf) => selectedChains.includes(bf.chain))
     .forEach((vault) => {
       defiTokens.push({
@@ -280,18 +264,12 @@ export default function ChartBalance({
         marginTop={"10px"}
         textShadow={"2px 2px 7px rgb(0 0 0 / 50%)"}
       >
-        <Skeleton isLoaded={!isLoading}>
-          <Heading>
-            {formatBalanceCurrency(totalBalance, selectedCurrency)}{" "}
-          </Heading>
-          <Heading size={"lg"} color={totalPercentage > 0 ? "green" : "red"}>
-            {formatBalanceChange(
-              totalPercentage,
-              totalBalance,
-              selectedCurrency
-            )}
-          </Heading>
-        </Skeleton>
+        <Heading>
+          {formatBalanceCurrency(totalBalance, selectedCurrency)}{" "}
+        </Heading>
+        <Heading size={"lg"} color={totalPercentage > 0 ? "green" : "red"}>
+          {formatBalanceChange(totalPercentage, totalBalance, selectedCurrency)}
+        </Heading>
       </Box>
       <Chart type="line" ref={chartRef} options={options} data={data} />
     </Box>

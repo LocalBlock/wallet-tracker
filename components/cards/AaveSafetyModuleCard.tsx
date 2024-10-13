@@ -13,15 +13,14 @@ import {
   CardBody,
   VStack,
   StackDivider,
-  SimpleGrid,
   Flex,
 } from "@chakra-ui/react";
 import { FetchCoinPrices } from "@/types";
 import { appSettings } from "@/app/appSettings";
-import { getDefi } from "@/app/actions/asset";
+import { getUserDefi } from "@/lib/assets";
 
 type Props = {
-  data: Awaited<ReturnType<typeof getDefi>>["aaveSafetymodule"];
+  data: Awaited<ReturnType<typeof getUserDefi>>["aaveSafetymodule"];
   currency: string;
   selectedChains: string[];
 };
@@ -31,9 +30,7 @@ export default function AaveSafetyModuleCard({
   currency,
   selectedChains,
 }: Props) {
-  if (data.length === 0) return null;
   const selectedCurrency = currency as keyof FetchCoinPrices[number];
-
   // Filter chains
   const smFiltered = data.filter((sm) => selectedChains.includes(sm.chain));
 
@@ -80,7 +77,6 @@ export default function AaveSafetyModuleCard({
                   alt={safetyModule.name}
                   boxSize={"50px"}
                 />
-
                 <Box>
                   <Box>
                     <b>{safetyModule.name}</b>
@@ -90,9 +86,9 @@ export default function AaveSafetyModuleCard({
                       " " +
                       safetyModule.symbol.toUpperCase()}
                   </Box>
-                  <Box >
-                    Claimable : {formatBalanceToken(safetyModule.balanceToClaim) +
-                      " AAVE"}
+                  <Box>
+                    Claimable :{" "}
+                    {formatBalanceToken(safetyModule.balanceToClaim) + " AAVE"}
                   </Box>
                 </Box>
               </Flex>

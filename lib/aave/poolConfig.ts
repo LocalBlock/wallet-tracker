@@ -31,3 +31,20 @@ export const poolConfig = {
     },
   },
 };
+
+/**
+ * All aToken contract addresses.
+ * @returns {string[]} An array of aToken contract addresses to lowercase.
+ */
+export const aTokenContractAddresses = getAaveAssets().map((asset) =>
+  asset.A_TOKEN.toLowerCase()
+);
+
+function getAaveAssets() {
+  return [
+    ...Object.values(AaveV2Ethereum.ASSETS),
+    ...Object.values(AaveV2Polygon.ASSETS),
+    ...Object.values(AaveV3Ethereum.ASSETS),
+    ...Object.values(AaveV3Polygon.ASSETS),
+  ];
+}

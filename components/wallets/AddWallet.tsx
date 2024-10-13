@@ -1,5 +1,18 @@
-import { addAddressWallet, addCustomWallet } from "@/app/actions/wallet";
+import { updateCoinData } from "@/app/actions/coinData";
+import {
+  addAddressWallet,
+  addCustomWallet,
+  removeWallet,
+  updateAddressWallet,
+} from "@/app/actions/wallet";
 import { fetchEnsAddress } from "@/lib/alchemy";
+import {
+  fetchAaveBalance,
+  fetchBalance,
+  fetchBeefyVaults,
+  fetchPrices,
+} from "@/lib/fetchFunctions";
+import { getAllIds } from "@/lib/utils";
 import {
   Button,
   FormControl,
@@ -41,14 +54,24 @@ export default function AddWallet({ currentAddressWallet }: Props) {
 
   const queryClient = useQueryClient();
 
-  // When this mutation succeeds, invalidate any queries with the `user` or `addressWallets` query key
   const mutationAddAddressWallet = useMutation({
     mutationFn: addAddressWallet,
-    onSuccess: (data) => {
-      queryClient.setQueryData(["user"], data);
-    },
-    onError: (error, variable) => {
+    onError: (error) => {
       toast({ title: error.name, description: error.message });
+    },
+  });
+
+  const mutationAddressWallet = useMutation({
+    mutationFn: updateAddressWallet,
+  });
+
+  const mutationCoinData = useMutation({
+    mutationFn: updateCoinData,
+    onSuccess: (data) => {
+      queryClient.setQueryData(["coinsData"], data);
+      queryClient.invalidateQueries({
+        queryKey: ["user"],
+      });
     },
   });
 
@@ -109,6 +132,8 @@ export default function AddWallet({ currentAddressWallet }: Props) {
     switch (type) {
       case "addressWallet":
         setIsLoading(true);
+        let ens: string | null;
+        let walletAddress: string;
         if (ensRegex.test(inputAddress)) {
           setIsLoadingText("Resovling ENS");
           const resolvedAddress = await fetchEnsAddress(inputAddress);
@@ -122,32 +147,97 @@ export default function AddWallet({ currentAddressWallet }: Props) {
               isClosable: true,
             });
             setIsLoading(false);
+            break;
           } else {
-            // Add Wallet with ens and fetch
-            setIsLoadingText("Fetch balance");
-            await mutationAddAddressWallet.mutateAsync({
-              address: resolvedAddress,
-              ens: inputAddress,
-            });
-            // Reset states
-            setIsLoading(false);
-            setInputAddress("");
-            // Close Modal
-            onClose();
+            ens = inputAddress;
+            walletAddress = resolvedAddress;
           }
         } else {
-          // Add Wallet without ENS and fetch
-          setIsLoadingText("Fetch balance");
-          await mutationAddAddressWallet.mutateAsync({
-            address: inputAddress,
-            ens: null,
-          });
-          // Reset states
-          setIsLoading(false);
-          setInputAddress("");
-          // Close Modal
-          onClose();
+          ens = null;
+          walletAddress = inputAddress;
         }
+
+        try {
+          // Create Wallet
+          await mutationAddAddressWallet.mutateAsync({
+            address: walletAddress,
+            ens: ens,
+          });
+
+          // Start fetching
+          setIsLoadingText("Fetching Balance");
+          const { nativeTokens, tokens } = await fetchBalance(walletAddress);
+
+          setIsLoadingText("Fetching Aave");
+
+          const { safetyModule, aavePools } = await fetchAaveBalance(
+            walletAddress
+          );
+
+          setIsLoadingText("Fetching Beefy");
+          const beefyUserVaults = await fetchBeefyVaults(tokens);
+
+          // Final Step
+          // Split tokens into 2 new array, identified/unidentified
+          const identifiedTokens = [];
+          const unIdentifiedTokens = [];
+          for (const token of tokens) {
+            if (token.coinDataId) {
+              identifiedTokens.push({
+                contractAddress: token.contractAddress,
+                balance: token.balance,
+                chain: token.chain,
+                coinDataId: token.coinDataId,
+              });
+            } else {
+              unIdentifiedTokens.push({
+                contractAddress: token.contractAddress,
+                balance: token.balance,
+                chain: token.chain,
+              });
+            }
+          }
+
+          // Mutate adresswallet
+          const newAddressWallet = await mutationAddressWallet.mutateAsync({
+            address: walletAddress,
+            nativeTokens: nativeTokens,
+            tokens: identifiedTokens,
+            defi: {
+              aaveSafetyModule: safetyModule,
+              aaveV2: aavePools.aaveV2,
+              aaveV3: aavePools.aaveV3,
+              beefy: beefyUserVaults,
+            },
+          });
+
+          //Get All Id for fetching price
+          const allIds = getAllIds(newAddressWallet);
+
+          // Start fetching Prices
+          setIsLoadingText("Fetching prices");
+          const { dataMarket, dataPrice } = await fetchPrices(allIds);
+          //Mutate coinsData
+          await mutationCoinData.mutateAsync({
+            coinIds: allIds,
+            dataMarket,
+            dataPrice,
+          });
+        } catch (error: any) {
+          console.error("AddWallet error", error.message);
+          toast({
+            title: error.name,
+            description: error.message,
+            status: "error",
+            position: "top",
+          });
+          removeWallet({ walletId: walletAddress, type: "AddressWallet" });
+        }
+        // Reset states
+        setIsLoading(false);
+        setInputAddress("");
+        // Close Modal
+        onClose();
         break;
       case "customWallet":
         await mutationCustomWallet.mutateAsync(inputName);
