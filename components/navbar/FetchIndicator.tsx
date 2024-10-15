@@ -178,14 +178,16 @@ export default function FetchIndicator() {
       // Fetch all Coins
       coinIdsToFetch = allIds;
     } else {
-      // Fetch only expired coindata
+      // Fetch only expired coindata or new coin
       allIds.forEach((id) => {
         const coinDataFinded = coinsData?.find((cd) => cd.id === id);
-        if (
-          coinDataFinded &&
-          isExpired(coinDataFinded.updatedAt, appSettings.fetchDelayPrices)
-        )
-          coinIdsToFetch.push(coinDataFinded.id);
+        if (coinDataFinded) {
+          if (isExpired(coinDataFinded.updatedAt, appSettings.fetchDelayPrices))
+            coinIdsToFetch.push(coinDataFinded.id);
+        } else {
+          // New coin, fetch price
+          coinIdsToFetch.push(id);
+        }
       });
     }
 
@@ -228,7 +230,10 @@ export default function FetchIndicator() {
           <Text>Prices :&nbsp;{lastFetchPrice?.toLocaleString()}</Text>
           <Text>Click to force update</Text>
           {errorUpdateCount > 0 ? (
-            <Text color={"red"}>⚠️There was some fetching errors at {new Date(errorUpdatedAt).toLocaleTimeString()}</Text>
+            <Text color={"red"}>
+              ⚠️There was some fetching errors at{" "}
+              {new Date(errorUpdatedAt).toLocaleTimeString()}
+            </Text>
           ) : null}
         </>
       );
