@@ -12,6 +12,7 @@ import { formatUserSummary, formatReserves } from "@aave/math-utils";
 import { poolConfig } from "./poolConfig";
 import { stakeConfig } from "./stakeConfig";
 import { AaveBalance } from "@/types";
+import { queryClientServer } from "../queryClientServer";
 
 export async function fetchAaveSafetyModule(address: string) {
   const stakedTokens = [
@@ -29,11 +30,14 @@ export async function fetchAaveSafetyModule(address: string) {
   const stakeDataProviderContract = new UiStakeDataProviderV3({
     uiStakeDataProvider: stakeConfig.stakeDataProvider,
   });
-  const generalStakeUIData =
-    await stakeDataProviderContract.getStakedAssetDataBatch(
-      stakedTokens,
-      oracles
-    );
+  // Fetch generalStakeUIData with a staletime, only 1 call for all user's addresses
+  const generalStakeUIData = await queryClientServer.fetchQuery({
+    queryKey: ["generalStakeUIData"],
+    queryFn: () =>
+      stakeDataProviderContract.getStakedAssetDataBatch(stakedTokens, oracles),
+    staleTime:60_000 // 60 seconds
+  });
+
   const userStakeUIData =
     await stakeDataProviderContract.getUserStakeUIDataHumanized({
       user,
@@ -118,10 +122,16 @@ export async function fetchAavePools(address: string) {
                 uiPoolDataProviderAddress,
                 chainId: chain.chainIdMainnet,
               });
-
-        const reserves = await poolDataProviderContract.getReservesHumanized({
-          lendingPoolAddressProvider,
+        // Fetch reserves with a staletime, only 1 call for all user's addresses
+        const reserves = await queryClientServer.fetchQuery({
+          queryKey: ["reserves", version, chain.id],
+          queryFn: () =>
+            poolDataProviderContract.getReservesHumanized({
+              lendingPoolAddressProvider,
+            }),
+          staleTime: 60_000, //60 seconds
         });
+
         const userReserves =
           await poolDataProviderContract.getUserReservesHumanized({
             lendingPoolAddressProvider,
