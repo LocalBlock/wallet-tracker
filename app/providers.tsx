@@ -38,16 +38,14 @@ function getQueryClient() {
 export function Providers({
   children,
   initialState,
-  wcProjectId,
 }: {
   children: React.ReactNode;
   initialState?: State;
-  wcProjectId?: string;
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const [config] = useState(() => getConfig(wcProjectId));
+  const [config] = useState(() => getConfig());
 
   // NOTE: Avoid useState when initializing the query client if you don't
   //       have a suspense boundary between this and the code that may

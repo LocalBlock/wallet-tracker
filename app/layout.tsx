@@ -36,18 +36,15 @@ export default async function RootLayout({
     queryFn: () => getCoinsData(),
   });
 
-  // Get environment variable from server to pass to wagmi provider context
-  const wcProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECTID;
-
   const initialState = cookieToInitialState(
-    getConfig(wcProjectId),
+    getConfig(),
     headers().get("cookie")
   );
 
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body suppressHydrationWarning={true}>
-        <Providers initialState={initialState} wcProjectId={wcProjectId}>
+        <Providers initialState={initialState}>
           <HydrationBoundary state={dehydrate(queryClient)}>
             {/* Need to put socket provider AFTER hydratation boundary to get prefetch user in provider */}
             <SocketProvider>
