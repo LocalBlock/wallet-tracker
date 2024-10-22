@@ -6,7 +6,7 @@ import { poolConfig } from "@/lib/aave/poolConfig";
 import { stakeConfig } from "@/lib/aave/stakeConfig";
 import { Prisma } from "@prisma/client";
 import { getUserData } from "@/app/actions/user";
-import { Network, WebhookType } from "alchemy-sdk";
+import { Network, WebhookType } from "@/lib/alchemy/types";
 
 export type NextApiResponseServerIo = NextApiResponse & {
   socket: Socket & {

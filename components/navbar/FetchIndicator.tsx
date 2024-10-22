@@ -73,6 +73,7 @@ export default function FetchIndicator() {
 
   if (!user) return null;
 
+  if (status === "error" && forceUpdate === true) setForceUpdate(false);
   if (forceUpdate && fetchStatus === "idle") forceRefetch();
 
   const fetchHandler = async () => {

@@ -4,11 +4,12 @@ import { cookies } from "next/headers";
 import { getIronSession } from "iron-session";
 import { SessionData, sessionOptions } from "@/app/session";
 import {
-  AddressActivityWebhook,
-  Alchemy,
-  AlchemySettings,
-  WebhookType,
-} from "alchemy-sdk";
+  createWebhook,
+  updateWebhook,
+  updateWebhookAddresses,
+  deleteWebhook,
+} from "@/lib/alchemy/webhooks";
+import { Webhook } from "@/lib/alchemy/types";
 import { appSettings } from "../appSettings";
 import { headers } from "next/headers";
 
@@ -21,15 +22,10 @@ export async function updateWebhookStatus({
 }) {
   // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
-  const config: AlchemySettings = {
-    authToken: process.env.ALCHEMY_AUTHTOKEN,
-    //url: `/alchemynotify`,
-  };
-  const alchemy = new Alchemy(config);
 
   // Alchemy side
   for await (const webhookId of webhookIds) {
-    await alchemy.notify.updateWebhook(webhookId, { isActive });
+    await updateWebhook(webhookId, isActive);
   }
 
   // database side
@@ -68,8 +64,7 @@ export async function updateWebhooks(payload: UpdatePayload) {
   // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
-  const createdWebhooks: (AddressActivityWebhook & { addresses: string[] })[] =
-    [];
+  const createdWebhooks: Webhook[] = [];
   const deletedWebhookIds: string[] = [];
   const updatedWebhooks: NonNullable<
     UpdatePayload[keyof UpdatePayload]["update"]
@@ -77,11 +72,6 @@ export async function updateWebhooks(payload: UpdatePayload) {
 
   for await (const networkStr of Object.keys(payload)) {
     const network = networkStr as keyof UpdatePayload;
-    const config: AlchemySettings = {
-      authToken: process.env.ALCHEMY_AUTHTOKEN,
-      network,
-    };
-    const alchemy = new Alchemy(config);
 
     // create
     if (payload[network].create) {
@@ -91,23 +81,20 @@ export async function updateWebhooks(payload: UpdatePayload) {
           ? headers().get("origin")
           : "https://localtest.ioulos.com") + "/api/alchemyHook";
 
-      const result = await alchemy.notify.createWebhook(
+      const result = await createWebhook(
         webhookUrl,
-        WebhookType.ADDRESS_ACTIVITY,
-        {
-          addresses: payload[network].create!.addresses,
-          //network: network,
-        }
+        network,
+        payload[network].create.addresses
       );
       createdWebhooks.push({
         ...result,
-        addresses: payload[network].create!.addresses,
+        addresses: payload[network].create.addresses,
       });
     }
     // Delete
     if (payload[network].delete) {
       const webhookId = payload[network].delete!.webhookId;
-      await alchemy.notify.deleteWebhook(webhookId);
+      await deleteWebhook(webhookId);
       deletedWebhookIds.push(webhookId);
     }
     //Update
@@ -116,7 +103,7 @@ export async function updateWebhooks(payload: UpdatePayload) {
       const addressesToAdd = payload[network].update!.addressesToAdd;
       const addressesToRemove = payload[network].update!.addressesToRemove;
 
-      await alchemy.notify.updateWebhook(webhookId, {
+      await updateWebhookAddresses(webhookId, {
         addAddresses: addressesToAdd,
         removeAddresses: addressesToRemove,
       });
@@ -150,7 +137,7 @@ export async function updateWebhooks(payload: UpdatePayload) {
     });
   }
 
-  // return updaded usez
+  // return updated user
   return await db.user.findUnique({
     where: { address: session.address },
     include: {

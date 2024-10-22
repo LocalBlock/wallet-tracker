@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { getIronSession } from "iron-session";
 import { SessionData, sessionOptions } from "@/app/session";
 import { fetchAavePools, fetchAaveSafetyModule } from "@/lib/aave";
-import { type ReadContractErrorType } from "@wagmi/core";
 
 export type AaveAPIResult = {
   safetyModule: Awaited<ReturnType<typeof fetchAaveSafetyModule>>;
@@ -37,38 +36,26 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    console.log("[Fetch] Aave Safety Module");
+    console.group("[Fetch Aave] : " + address);
+    console.group("Aave Safety Module");
     // Aave Safety Module
     const safetyModule = await fetchAaveSafetyModule(address);
-
+    console.groupEnd();
+    console.group("Aave Pools");
     // Aave Pools
-    console.log("[Fetch] Aave Pools");
     const aavePools = await fetchAavePools(address);
-
+    console.groupEnd();
+    console.groupEnd();
     return NextResponse.json<AaveAPIResult>({
       safetyModule,
       aavePools,
     });
-  } catch (e: any) {
-    if (e.name === "Error") {
-      //Standard Error
-      const error = e as Error;
-      console.log(error.message);
-      return NextResponse.json<Error>(
-        { name: "Aave fetch error", message: error.message },
-        { status: 500 }
-      );
-    } else {
-      // Viem Error
-      const error = e as ReadContractErrorType;
-      return NextResponse.json<Error>(
-        {
-          name: "Aave fetch error",
-          message: error.shortMessage,
-          cause: error.message,
-        },
-        { status: 500 }
-      );
-    }
+  } catch (error: any) {
+    console.groupEnd();
+    console.groupEnd();
+    return NextResponse.json<Error>(
+      { name: "Aave fetch error", message: error.message, cause: error.cause },
+      { status: 500 }
+    );
   }
 }

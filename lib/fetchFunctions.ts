@@ -18,7 +18,7 @@ export async function fetchBalance(address: string) {
   });
   if (!response.ok) {
     const err = (await response.json()) as Error;
-    throw new Error(err.message);
+    throw new Error(err.message, { cause: err.cause });
   }
 
   return (await response.json()) as BalanceAPIResult;
@@ -39,8 +39,7 @@ export async function fetchAaveBalance(address: string) {
 
   if (!response.ok) {
     const err = (await response.json()) as Error;
-    if (err.cause) console.error(err.cause);
-    throw new Error(err.name + " : " + err.message);
+    throw new Error(err.message, { cause: err.cause });
   }
   return (await response.json()) as AaveAPIResult;
 }

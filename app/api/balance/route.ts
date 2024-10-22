@@ -41,33 +41,37 @@ export async function GET(request: NextRequest) {
   try {
     const newNativeTokens: BalanceAPIResult["nativeTokens"] = [];
     const newTokens: BalanceAPIResult["tokens"] = [];
+    console.group("[Fetch balances] : " + address);
     // For each chains in appsettings
     for await (const chain of appSettings.chains) {
+      console.group(chain.name);
       // Native balance
       const nativeToken = await fetchNativeBalance(address, chain);
       // Tokens
       const tokensBalance = await fetchTokensBalance(address, chain);
-
+      console.groupEnd();
       // Merge result between chain
       newNativeTokens.push(nativeToken);
       newTokens.push(...tokensBalance);
     }
+    console.groupEnd();
 
     return NextResponse.json<BalanceAPIResult>({
       nativeTokens: newNativeTokens,
       tokens: newTokens,
     });
   } catch (error: any) {
-    // Catch all no 2xx errors from alchemy sdk
-    const alchemyError = JSON.parse(error.body);
-    console.log(alchemyError);
+    const alchemyError = error as Error;
+    console.groupEnd();
+    console.groupEnd();
 
     return NextResponse.json<Error>(
       {
-        name: "Alchemy fetch error",
-        message: alchemyError.error.message,
+        name: "Balance error",
+        message: alchemyError.message,
+        cause: alchemyError.cause,
       },
-      { status: error.status }
+      { status: 500 }
     );
   }
 }

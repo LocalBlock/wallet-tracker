@@ -28,7 +28,7 @@ import {
 } from "@/app/actions/webhook";
 import { AddressWallet, Webhook } from "@prisma/client";
 import { displayName } from "@/lib/utils";
-import { Network } from "alchemy-sdk";
+import { Network } from "@/lib/alchemy/types";
 import { appSettings } from "@/app/appSettings";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 

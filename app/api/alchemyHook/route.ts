@@ -3,7 +3,7 @@ import { appSettings } from "@/app/appSettings";
 import { db } from "@/lib/db";
 import { IncomingNotifications } from "@/types";
 import { Notification } from "@prisma/client";
-import { Network } from "alchemy-sdk";
+import { Network } from "@/lib/alchemy/types";
 
 let timer: NodeJS.Timeout;
 let incomingNotifications: IncomingNotifications[] = [];

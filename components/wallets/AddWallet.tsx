@@ -5,7 +5,6 @@ import {
   removeWallet,
   updateAddressWallet,
 } from "@/app/actions/wallet";
-import { fetchEnsAddress } from "@/lib/alchemy";
 import {
   fetchAaveBalance,
   fetchBalance,
@@ -35,6 +34,9 @@ import {
 } from "@chakra-ui/react";
 import { AddressWallet } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useConfig } from "wagmi";
+import { getEnsAddress } from "@wagmi/core";
+import { normalize } from "viem/ens";
 
 import { useState } from "react";
 import { isAddress } from "viem";
@@ -51,6 +53,7 @@ export default function AddWallet({ currentAddressWallet }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setIsLoadingText] = useState("");
   const toast = useToast();
+  const config = useConfig();
 
   const queryClient = useQueryClient();
 
@@ -136,7 +139,10 @@ export default function AddWallet({ currentAddressWallet }: Props) {
         let walletAddress: string;
         if (ensRegex.test(inputAddress)) {
           setIsLoadingText("Resovling ENS");
-          const resolvedAddress = await fetchEnsAddress(inputAddress);
+          // will use the default transport from wagmi config (https://cloudflare-eth.com/)
+          const resolvedAddress = await getEnsAddress(config, {
+            name: normalize(inputAddress),
+          });
           if (!resolvedAddress) {
             toast({
               title: "Error",

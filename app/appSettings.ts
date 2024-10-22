@@ -1,4 +1,4 @@
-import { Network } from "alchemy-sdk";
+import { Network } from "@/lib/alchemy/types";
 
 export const appSettings = {
   fetchDelayCoinList: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -37,8 +37,7 @@ export const appSettings = {
       chainIdMainnet: 1,
       alchemyTestnet: Network.ETH_GOERLI,
       chainIdTestnet: 5,
-      explorerUrl : "https://etherscan.io"
-
+      explorerUrl: "https://etherscan.io",
     },
     {
       id: "polygon-pos",
@@ -50,7 +49,7 @@ export const appSettings = {
       chainIdMainnet: 137,
       alchemyTestnet: Network.MATIC_MUMBAI,
       chainIdTestnet: 80001,
-      explorerUrl : "https://polygonscan.com"
+      explorerUrl: "https://polygonscan.com",
     },
   ],
   defi: {
