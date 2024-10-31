@@ -133,8 +133,6 @@ export async function removeWallet({
     await db.user.update({
       where: { address: session.address },
       data: {
-        selectedWalletId: null,
-        selectedGroupId: null,
         groups: {
           delete: groupIdToDelete.map((id) => {
             return { id };
