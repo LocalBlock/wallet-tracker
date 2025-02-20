@@ -20,14 +20,12 @@ export const poolConfig = {
   },
   aaveV3: {
     ethereum: {
-      //uiPoolDataProviderAddress: AaveV3Ethereum.UI_POOL_DATA_PROVIDER,
-      uiPoolDataProviderAddress: "0x194324C9Af7f56E22F1614dD82E18621cb9238E7",
+      uiPoolDataProviderAddress: AaveV3Ethereum.UI_POOL_DATA_PROVIDER,
       uiIncentiveDataProviderAddress: AaveV3Ethereum.UI_INCENTIVE_DATA_PROVIDER,
       lendingPoolAddressProvider: AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
     },
     "polygon-pos": {
-      //uiPoolDataProviderAddress: AaveV3Polygon.UI_POOL_DATA_PROVIDER,
-      uiPoolDataProviderAddress: "0xE92cd6164CE7DC68e740765BC1f2a091B6CBc3e4",
+      uiPoolDataProviderAddress: AaveV3Polygon.UI_POOL_DATA_PROVIDER,
       uiIncentiveDataProviderAddress: AaveV3Polygon.UI_INCENTIVE_DATA_PROVIDER,
       lendingPoolAddressProvider: AaveV3Polygon.POOL_ADDRESSES_PROVIDER,
     },

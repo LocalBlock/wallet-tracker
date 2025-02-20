@@ -7,6 +7,8 @@ import {
   ReserveDataHumanized,
   ReservesDataHumanized,
   UserReserveDataHumanized,
+  EModeData,
+  EmodeDataHumanized,
 } from "./types";
 
 export * from "./types";
@@ -45,6 +47,10 @@ export interface UiPoolDataProviderInterface {
   getUserReservesData: (
     args: UserReservesHelperInput
   ) => Promise<UserReserveData>;
+  getEModes: (args: ReservesHelperInput) => Promise<readonly EModeData[]>;
+  getEModesHumanized: (
+    args: ReservesHelperInput
+  ) => Promise<EmodeDataHumanized[]>;
   getReservesHumanized: (
     args: ReservesHelperInput
   ) => Promise<ReservesDataHumanized>;
@@ -143,11 +149,12 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
       await this.getReservesData({ lendingPoolAddressProvider });
 
     const reservesData: ReserveDataHumanized[] = reservesRaw.map(
-      (reserveRaw) => {
+      (reserveRaw, index) => {
         const virtualUnderlyingBalance =
           reserveRaw.virtualUnderlyingBalance.toString();
         const { virtualAccActive } = reserveRaw;
         return {
+          originalId: index,
           id: `${this.chainId}-${reserveRaw.underlyingAsset}-${lendingPoolAddressProvider}`.toLowerCase(),
           underlyingAsset: reserveRaw.underlyingAsset.toLowerCase(),
           name: reserveRaw.name,
@@ -163,28 +170,19 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
           reserveFactor: reserveRaw.reserveFactor.toString(),
           usageAsCollateralEnabled: reserveRaw.usageAsCollateralEnabled,
           borrowingEnabled: reserveRaw.borrowingEnabled,
-          stableBorrowRateEnabled: reserveRaw.stableBorrowRateEnabled,
           isActive: reserveRaw.isActive,
           isFrozen: reserveRaw.isFrozen,
           liquidityIndex: reserveRaw.liquidityIndex.toString(),
           variableBorrowIndex: reserveRaw.variableBorrowIndex.toString(),
           liquidityRate: reserveRaw.liquidityRate.toString(),
           variableBorrowRate: reserveRaw.variableBorrowRate.toString(),
-          stableBorrowRate: reserveRaw.stableBorrowRate.toString(),
           lastUpdateTimestamp: reserveRaw.lastUpdateTimestamp,
           aTokenAddress: reserveRaw.aTokenAddress.toString(),
-          stableDebtTokenAddress: reserveRaw.stableDebtTokenAddress.toString(),
           variableDebtTokenAddress:
             reserveRaw.variableDebtTokenAddress.toString(),
           interestRateStrategyAddress:
             reserveRaw.interestRateStrategyAddress.toString(),
           availableLiquidity: reserveRaw.availableLiquidity.toString(),
-          totalPrincipalStableDebt:
-            reserveRaw.totalPrincipalStableDebt.toString(),
-          averageStableRate: reserveRaw.averageStableRate.toString(),
-          stableDebtLastUpdateTimestamp: Number(
-            reserveRaw.stableDebtLastUpdateTimestamp
-          ),
           totalScaledVariableDebt:
             reserveRaw.totalScaledVariableDebt.toString(),
           priceInMarketReferenceCurrency:
@@ -192,22 +190,13 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
           priceOracle: reserveRaw.priceOracle,
           variableRateSlope1: reserveRaw.variableRateSlope1.toString(),
           variableRateSlope2: reserveRaw.variableRateSlope2.toString(),
-          stableRateSlope1: reserveRaw.stableRateSlope1.toString(),
-          stableRateSlope2: reserveRaw.stableRateSlope2.toString(),
-          baseStableBorrowRate: reserveRaw.baseStableBorrowRate.toString(),
           baseVariableBorrowRate: reserveRaw.baseVariableBorrowRate.toString(),
           optimalUsageRatio: reserveRaw.optimalUsageRatio.toString(),
           // new fields
           isPaused: reserveRaw.isPaused,
           debtCeiling: reserveRaw.debtCeiling.toString(),
-          eModeCategoryId: reserveRaw.eModeCategoryId,
           borrowCap: reserveRaw.borrowCap.toString(),
           supplyCap: reserveRaw.supplyCap.toString(),
-          eModeLtv: reserveRaw.eModeLtv,
-          eModeLiquidationThreshold: reserveRaw.eModeLiquidationThreshold,
-          eModeLiquidationBonus: reserveRaw.eModeLiquidationBonus,
-          eModePriceSource: reserveRaw.eModePriceSource.toString(),
-          eModeLabel: reserveRaw.eModeLabel.toString(),
           borrowableInIsolation: reserveRaw.borrowableInIsolation,
           accruedToTreasury: reserveRaw.accruedToTreasury.toString(),
           unbacked: reserveRaw.unbacked.toString(),
@@ -256,14 +245,51 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
         scaledATokenBalance: userReserveRaw.scaledATokenBalance.toString(),
         usageAsCollateralEnabledOnUser:
           userReserveRaw.usageAsCollateralEnabledOnUser,
-        stableBorrowRate: userReserveRaw.stableBorrowRate.toString(),
         scaledVariableDebt: userReserveRaw.scaledVariableDebt.toString(),
-        principalStableDebt: userReserveRaw.principalStableDebt.toString(),
-        stableBorrowLastUpdateTimestamp: Number(
-          userReserveRaw.stableBorrowLastUpdateTimestamp
-        ),
       })),
       userEmodeCategoryId,
     };
+  }
+
+  public async getEModes({
+    lendingPoolAddressProvider,
+  }: ReservesHelperInput): Promise<readonly EModeData[]> {
+    if (!isAddress(lendingPoolAddressProvider)) {
+      throw new Error("Lending pool address is not valid");
+    }
+
+    return readContract(config, {
+      abi: UiPoolDataProvider_ABI,
+      address: this.uiPoolDataProviderAddress,
+      functionName: "getEModes",
+      args: [lendingPoolAddressProvider],
+      chainId: config.chains[this.wagmiConfigChainIndex].id,
+    });
+  }
+
+  public async getEModesHumanized({
+    lendingPoolAddressProvider,
+  }: ReservesHelperInput): Promise<EmodeDataHumanized[]> {
+    if (!isAddress(lendingPoolAddressProvider)) {
+      throw new Error("Lending pool address is not valid");
+    }
+
+    const eModeData = await this.getEModes({ lendingPoolAddressProvider });
+
+    return eModeData.map((eMode) => ({
+      id: eMode.id,
+      eMode: {
+        ltv: eMode.eMode.ltv.toString(),
+        liquidationThreshold: eMode.eMode.liquidationThreshold.toString(),
+        liquidationBonus: eMode.eMode.liquidationBonus.toString(),
+        collateralBitmap: eMode.eMode.collateralBitmap
+          .toString(2)
+          .padStart(256, "0"),
+        label: eMode.eMode.label,
+        borrowableBitmap: eMode.eMode.borrowableBitmap
+          .toString(2)
+          .padStart(256, "0"),
+      },
+    }));
   }
 }

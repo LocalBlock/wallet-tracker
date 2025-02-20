@@ -1,8 +1,36 @@
 // Original from packages/contract-helpers/src/v3-UiPoolDataProvider-contract/types.ts
-// Migrate from ethers js Bignumbers to native Bigint
+// Migrate from ethers js bigints to native Bigint
+
+export interface EModeCategoryHumanized {
+  ltv: string;
+  liquidationThreshold: string;
+  liquidationBonus: string;
+  collateralBitmap: string;
+  label: string;
+  borrowableBitmap: string;
+}
+
+export interface EModeCategory {
+  ltv: number;
+  liquidationThreshold: number;
+  liquidationBonus: number;
+  collateralBitmap: bigint;
+  label: string;
+  borrowableBitmap: bigint;
+}
+
+export interface EmodeDataHumanized {
+  id: number;
+  eMode: EModeCategoryHumanized;
+}
+
+export interface EModeData {
+  id: number;
+  eMode: EModeCategory;
+}
 
 export interface ReservesData {
-  0: ReadonlyArray< {
+  0: ReadonlyArray<{
     underlyingAsset: string;
     name: string;
     symbol: string;
@@ -13,31 +41,22 @@ export interface ReservesData {
     reserveFactor: bigint;
     usageAsCollateralEnabled: boolean;
     borrowingEnabled: boolean;
-    stableBorrowRateEnabled: boolean;
     isActive: boolean;
     isFrozen: boolean;
     liquidityIndex: bigint;
     variableBorrowIndex: bigint;
     liquidityRate: bigint;
     variableBorrowRate: bigint;
-    stableBorrowRate: bigint;
     lastUpdateTimestamp: number;
     aTokenAddress: string;
-    stableDebtTokenAddress: string;
     variableDebtTokenAddress: string;
     interestRateStrategyAddress: string;
     availableLiquidity: bigint;
-    totalPrincipalStableDebt: bigint;
-    averageStableRate: bigint;
-    stableDebtLastUpdateTimestamp: bigint;
     totalScaledVariableDebt: bigint;
     priceInMarketReferenceCurrency: bigint;
     priceOracle: string;
     variableRateSlope1: bigint;
     variableRateSlope2: bigint;
-    stableRateSlope1: bigint;
-    stableRateSlope2: bigint;
-    baseStableBorrowRate: bigint;
     baseVariableBorrowRate: bigint;
     optimalUsageRatio: bigint;
     isPaused: boolean;
@@ -45,18 +64,12 @@ export interface ReservesData {
     accruedToTreasury: bigint;
     unbacked: bigint;
     isolationModeTotalDebt: bigint;
+    flashLoanEnabled: boolean;
     debtCeiling: bigint;
     debtCeilingDecimals: bigint;
-    eModeCategoryId: number;
     borrowCap: bigint;
     supplyCap: bigint;
-    eModeLtv: number;
-    eModeLiquidationThreshold: number;
-    eModeLiquidationBonus: number;
-    eModePriceSource: string;
-    eModeLabel: string;
     borrowableInIsolation: boolean;
-    flashLoanEnabled: boolean;
     virtualAccActive: boolean;
     virtualUnderlyingBalance: bigint;
   }>;
@@ -73,10 +86,7 @@ export interface UserReserveData {
     underlyingAsset: string;
     scaledATokenBalance: bigint;
     usageAsCollateralEnabledOnUser: boolean;
-    stableBorrowRate: bigint;
     scaledVariableDebt: bigint;
-    principalStableDebt: bigint;
-    stableBorrowLastUpdateTimestamp: bigint;
   }>;
   1: number;
 }
@@ -87,7 +97,9 @@ export interface PoolBaseCurrencyHumanized {
   networkBaseTokenPriceInUsd: string;
   networkBaseTokenPriceDecimals: number;
 }
+
 export interface ReserveDataHumanized {
+  originalId: number;
   id: string;
   underlyingAsset: string;
   name: string;
@@ -99,31 +111,22 @@ export interface ReserveDataHumanized {
   reserveFactor: string;
   usageAsCollateralEnabled: boolean;
   borrowingEnabled: boolean;
-  stableBorrowRateEnabled: boolean;
   isActive: boolean;
   isFrozen: boolean;
   liquidityIndex: string;
   variableBorrowIndex: string;
   liquidityRate: string;
   variableBorrowRate: string;
-  stableBorrowRate: string;
   lastUpdateTimestamp: number;
   aTokenAddress: string;
-  stableDebtTokenAddress: string;
   variableDebtTokenAddress: string;
   interestRateStrategyAddress: string;
   availableLiquidity: string;
-  totalPrincipalStableDebt: string;
-  averageStableRate: string;
-  stableDebtLastUpdateTimestamp: number;
   totalScaledVariableDebt: string;
   priceInMarketReferenceCurrency: string;
   priceOracle: string;
   variableRateSlope1: string;
   variableRateSlope2: string;
-  stableRateSlope1: string;
-  stableRateSlope2: string;
-  baseStableBorrowRate: string;
   baseVariableBorrowRate: string;
   optimalUsageRatio: string;
   // v3 only
@@ -132,18 +135,12 @@ export interface ReserveDataHumanized {
   accruedToTreasury: string;
   unbacked: string;
   isolationModeTotalDebt: string;
+  flashLoanEnabled: boolean;
   debtCeiling: string;
   debtCeilingDecimals: number;
-  eModeCategoryId: number;
   borrowCap: string;
   supplyCap: string;
-  eModeLtv: number;
-  eModeLiquidationThreshold: number;
-  eModeLiquidationBonus: number;
-  eModePriceSource: string;
-  eModeLabel: string;
   borrowableInIsolation: boolean;
-  flashLoanEnabled: boolean;
   virtualAccActive: boolean;
   virtualUnderlyingBalance: string;
 }
@@ -158,8 +155,5 @@ export interface UserReserveDataHumanized {
   underlyingAsset: string;
   scaledATokenBalance: string;
   usageAsCollateralEnabledOnUser: boolean;
-  stableBorrowRate: string;
   scaledVariableDebt: string;
-  principalStableDebt: string;
-  stableBorrowLastUpdateTimestamp: number;
 }
