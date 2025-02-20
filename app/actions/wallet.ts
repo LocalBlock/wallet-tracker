@@ -15,7 +15,6 @@ export async function addAddressWallet({
   address: string;
   ens: string | null;
 }) {
-  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   // Address wallet already exist in db
@@ -57,7 +56,6 @@ export async function addAddressWallet({
 }
 
 export async function addCustomWallet(name: string) {
-  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
   const addressWalletCount = await db.addressWallet.count({
     where: { address: session.address },
@@ -94,7 +92,6 @@ export async function removeWallet({
   walletId: string;
   type: WalletType;
 }) {
-  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   // Get current data
@@ -287,7 +284,6 @@ export async function updateCustomWallet({
   walletId: string;
   coins: CustomWallet["coins"];
 }) {
-  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
   return await db.user.update({
     where: { address: session.address },
@@ -304,7 +300,6 @@ export async function updateCustomWallet({
 }
 
 export async function updateSelectedWallet(selectedWalletId: string) {
-  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   return await db.user.update({

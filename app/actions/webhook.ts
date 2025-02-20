@@ -20,7 +20,6 @@ export async function updateWebhookStatus({
   webhookIds: string[];
   isActive: boolean;
 }) {
-  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   // Alchemy side
@@ -61,7 +60,6 @@ export type UpdatePayload = {
 };
 
 export async function updateWebhooks(payload: UpdatePayload) {
-  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   const createdWebhooks: Webhook[] = [];

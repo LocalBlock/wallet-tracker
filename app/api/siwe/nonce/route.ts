@@ -4,7 +4,6 @@ import { SessionData, sessionOptions } from "@/app/session";
 import { generateSiweNonce } from "viem/siwe";
 
 export async function GET() {
-  // @ts-expect-error for cookies()
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
   // Generate Nonce
   session.nonce = generateSiweNonce();
