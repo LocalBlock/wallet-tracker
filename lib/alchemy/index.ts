@@ -1,113 +1,92 @@
-import {
-  createContractData,
-  getCoinlist,
-  getContractData,
-} from "@/app/actions/coinData";
+import { getCoinlist } from "@/app/actions/coinData";
 import { aTokenContractAddresses } from "../aave/poolConfig";
 import { appSettings } from "@/app/appSettings";
-
-import { getTokenBalances, getTokenMetadata } from "./tokens";
 import { formatEther, formatUnits } from "viem";
-import { getBalance } from "./nativeBalance";
+import { getTokensByWallet } from "./portfolio";
+import { BalanceAPIResult } from "@/app/api/balance/route";
+import { GetTokensByWalletRequest } from "./types";
 
-export async function fetchTokensBalance(
-  address: string,
-  chain: (typeof appSettings.chains)[number]
-) {
-  // Get contractData
-  const contractData = await getContractData();
+/**
+ * Fetch tokens and native tokens on alchemy
+ * @param addresses array of address
+ * @returns
+ */
+export async function fetchTokensBalance(addresses: string[]) {
+  // Construct request
+  const request: GetTokensByWalletRequest = {
+    addresses: addresses.map((address) => {
+      return {
+        address: address,
+        networks: appSettings.chains.map((ch) => ch.alchemyMainnet),
+      };
+    }),
+    includeNativeTokens: true,
+    withMetadata: true,
+    withPrices: false, // no need prices from alchemy
+  };
+
+  // fetch tokens
+  const alchemyResult = await getTokensByWallet(request);
+  console.log(`${alchemyResult.length} tokens from alchemy`);
+
+  // filter non zero balance to alchemy result
+  const nonZeroBalance = alchemyResult.filter(
+    (token) => token.tokenBalance && parseInt(token.tokenBalance, 16) != 0
+  );
+  console.log(`${nonZeroBalance.length} non zero balance`);
 
   // Get coinlist from db
   const coinlist = await getCoinlist();
 
-  // Get tokens
-  console.log(`\x1b[36m[Fetch]\x1b[0m Token balances`);
-  const tokens = await getTokenBalances(address, chain.alchemyMainnet);
+  // Build result
+  const result: BalanceAPIResult = addresses.map((address) => {
+    return { address, nativeTokens: [], tokens: [] };
+  });
 
-  // Remove tokens with zero balance and Atoken (atokenContractAddresses from aave-address-book )
-  const nonZeroBalances = tokens
-    .filter(
-      (token) => token.tokenBalance && parseInt(token.tokenBalance, 16) != 0
-    )
-    .filter(
-      (token) => !aTokenContractAddresses.includes(token.contractAddress)
+  nonZeroBalance.forEach((rawToken) => {
+    const resultAddress = result.find(
+      (result) => result.address.toLowerCase() === rawToken.address
     );
+    if (!resultAddress) throw new Error(rawToken.address + " not finded");
+    // adaptation pour matic/polygon à verifier pus tard si ca marche toujours
+    const rawNetwork =
+      rawToken.network === "matic-mainnet"
+        ? "polygon-mainnet"
+        : rawToken.network;
+    const chain = appSettings.chains.find(
+      (ch) => ch.alchemyMainnet === rawNetwork
+    );
+    if (!chain) throw new Error(rawNetwork + "not in appSettings ");
 
-  // Add decimals and fetch metadadata if not exist in db
-  const nonZeroBalancesDecimals = [];
-  let counterMetadata = 0;
-  for (const token of nonZeroBalances) {
-    const findDecimals = contractData.find(
-      (data) =>
-        data.address === token.contractAddress && data.chainId === chain.id
-    );
-    if (!findDecimals) {
-      const metadata = await getTokenMetadata(
-        token.contractAddress,
-        chain.alchemyMainnet
-      );
-      counterMetadata++;
-      nonZeroBalancesDecimals.push({
-        ...token,
-        decimals: metadata.decimals,
-      });
-      await createContractData({
-        chainId: chain.id,
-        address: token.contractAddress,
-        decimals: metadata.decimals,
-        name: metadata.name,
-        symbol: metadata.symbol,
+    if (rawToken.tokenAddress === null) {
+      // no token address mean native token
+      resultAddress.nativeTokens.push({
+        balance: formatEther(BigInt(rawToken.tokenBalance)),
+        coinDataId: chain.tokenId,
+        chain: chain.id,
       });
     } else {
-      nonZeroBalancesDecimals.push({
-        ...token,
-        decimals: findDecimals.decimals,
-      });
-    }
-  }
+      // standard token
+      if (
+        rawToken.tokenMetadata && // with metadata
+        rawToken.tokenMetadata.decimals && // and decimals
+        !aTokenContractAddresses.includes(rawToken.tokenAddress) // and not a aave token
+      ) {
+        const findCoingecko = coinlist.find(
+          (coin) => coin.platforms[chain.id] === rawToken.tokenAddress
+        );
+        resultAddress.tokens.push({
+          balance: formatUnits(
+            BigInt(parseInt(rawToken.tokenBalance, 16)),
+            rawToken.tokenMetadata.decimals
+          ),
+          contractAddress: rawToken.tokenAddress,
+          chain: chain.id,
+          coinDataId: findCoingecko ? findCoingecko.id : undefined,
+        });
+      }
+    } // otherwise ignore token data
+  });
 
-  const resultTokens = [];
-  for (const alchemyToken of nonZeroBalancesDecimals) {
-    const findCoingecko = coinlist.find(
-      (coin) => coin.platforms[chain.id] === alchemyToken.contractAddress
-    );
-    if (alchemyToken.decimals) {
-      resultTokens.push({
-        contractAddress: alchemyToken.contractAddress,
-        balance: formatUnits(
-          BigInt(parseInt(alchemyToken.tokenBalance!, 16)),
-          alchemyToken.decimals
-        ),
-        chain: chain.id,
-        coinDataId: findCoingecko ? findCoingecko.id : undefined,
-      });
-    }
-  }
-
-  console.log(
-    `\x1b[32m[Fetch result]\x1b[0m`,
-    "Total tokens:",
-    tokens.length,
-    ",Non zero balance:",
-    nonZeroBalances.length,
-    ",Metadata fetched",
-    counterMetadata,
-    ",Tokens result:",
-    resultTokens.length
-  );
-  return resultTokens;
-}
-
-export async function fetchNativeBalance(
-  address: string,
-  chain: (typeof appSettings.chains)[number]
-) {
-  console.log(`\x1b[36m[Fetch]\x1b[0m Native balance`);
-  const balance = await getBalance(address, chain.alchemyMainnet);
-  console.log(`\x1b[32m[Fetch Result]\x1b[0m ${formatEther(BigInt(balance))}`);
-  return {
-    balance: formatEther(BigInt(balance)),
-    coinDataId: chain.tokenId,
-    chain: chain.id,
-  };
+  return result;
 }

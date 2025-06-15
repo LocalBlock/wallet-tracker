@@ -172,7 +172,12 @@ export default function AddWallet({ currentAddressWallet }: Props) {
 
           // Start fetching
           setIsLoadingText("Fetching Balance");
-          const { nativeTokens, tokens } = await fetchBalance(walletAddress);
+          const allBalanceFetched = await fetchBalance([walletAddress]);
+          const balance = allBalanceFetched.find(
+            (a) => a.address === walletAddress
+          );
+          if (!balance)
+            throw new Error(`No balance found for ${walletAddress}`);
 
           setIsLoadingText("Fetching Aave");
 
@@ -181,13 +186,13 @@ export default function AddWallet({ currentAddressWallet }: Props) {
           );
 
           setIsLoadingText("Fetching Beefy");
-          const beefyUserVaults = await fetchBeefyVaults(tokens);
+          const beefyUserVaults = await fetchBeefyVaults(balance.tokens);
 
           // Final Step
           // Split tokens into 2 new array, identified/unidentified
           const identifiedTokens = [];
           const unIdentifiedTokens = [];
-          for (const token of tokens) {
+          for (const token of balance.tokens) {
             if (token.coinDataId) {
               identifiedTokens.push({
                 contractAddress: token.contractAddress,
@@ -207,7 +212,7 @@ export default function AddWallet({ currentAddressWallet }: Props) {
           // Mutate adresswallet
           const newAddressWallet = await mutationAddressWallet.mutateAsync({
             address: walletAddress,
-            nativeTokens: nativeTokens,
+            nativeTokens: balance.nativeTokens,
             tokens: identifiedTokens,
             defi: {
               aaveSafetyModule: safetyModule,

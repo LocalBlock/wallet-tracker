@@ -81,17 +81,20 @@ export default function FetchIndicator() {
     let errorMessage: string | undefined = undefined;
 
     // AddressWallets
+    let allBalanceFetched: Awaited<ReturnType<typeof fetchBalance>> | undefined = undefined;
     for await (const addressWallet of user.addressWallets) {
       if (
         isExpired(addressWallet.lastfetch, appSettings.fetchDelayBalance) ||
         forceUpdate
       ) {
-        console.log(`[Fetch address : ${addressWallet.address}]`);
-
         // BALANCE
-        const { nativeTokens, tokens } = await fetchBalance(
-          addressWallet.address
-        );
+        if (!allBalanceFetched) {
+          // Fetch balance on all addresses
+          const addressToFetch = user.addressWallets.map((ad) => ad.address);
+          allBalanceFetched = await fetchBalance(addressToFetch);
+        }
+        const balance=allBalanceFetched.find((a) => a.address === addressWallet.address)
+        if (!balance) throw new Error(`No balance found for ${addressWallet.address}`);
 
         // AAVE
         let safetyModule:
@@ -116,7 +119,7 @@ export default function FetchIndicator() {
           | Awaited<ReturnType<typeof fetchBeefyVaults>>
           | undefined;
         try {
-          beefyUserVaults = await fetchBeefyVaults(tokens);
+          beefyUserVaults = await fetchBeefyVaults(balance.tokens);
         } catch (error: any) {
           errorMessage = errorMessage + "\n" + error.message;
         }
@@ -125,7 +128,7 @@ export default function FetchIndicator() {
         // Split tokens into 2 new array, identified/unidentified
         const identifiedTokens = [];
         const unIdentifiedTokens = [];
-        for (const token of tokens) {
+        for (const token of balance.tokens) {
           if (token.coinDataId) {
             identifiedTokens.push({
               contractAddress: token.contractAddress,
@@ -145,7 +148,7 @@ export default function FetchIndicator() {
         // mutate adresswallet
         const updatedAddressWallet = await mutationAddressWallet.mutateAsync({
           address: addressWallet.address,
-          nativeTokens: nativeTokens,
+          nativeTokens: balance.nativeTokens,
           tokens: identifiedTokens,
           defi: {
             aaveSafetyModule:

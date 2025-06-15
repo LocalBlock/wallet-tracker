@@ -111,12 +111,3 @@ model CoinData {
   /// [Price]
   price           Json
 }
-
-model ContractData {
-  id       Int     @id @default(autoincrement())
-  chainId  String
-  address  String
-  decimals Int?
-  name     String?
-  symbol   String?
-}

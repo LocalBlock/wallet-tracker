@@ -63,56 +63,6 @@ export enum Network {
   SONEIUM_MINATO = "soneium-minato",
 }
 
-export type GetBlanceResponse = {
-  id: number;
-  jsonrpc: string;
-  result: string;
-};
-
-export type TokenBalancesResponse = {
-  id: number;
-  jsonrpc: string;
-  result: {
-    address: string; //The address for which token balances were checked
-    tokenBalances: {
-      contractAddress: string;
-      tokenBalance: string | null;
-      error: string | null;
-    }[];
-    pageKey: string | undefined;
-  };
-};
-
-export type TokenMetadataResponse = {
-  id: number;
-  jsonrpc: string;
-  result: {
-    /**
-     * The token's name. Is `null` if the name is not defined in the contract and
-     * not available from other sources.
-     */
-    name: string | null;
-    /**
-     * The token's symbol. Is `null` if the symbol is not defined in the contract
-     * and not available from other sources.
-     */
-    symbol: string | null;
-    /**
-     * The number of decimals of the token. Returns `null` if not defined in the
-     * contract and not available from other sources.
-     */
-    decimals: number | null;
-    /** URL link to the token's logo. Is `null` if the logo is not available. */
-    logo: string | null;
-  };
-};
-
-export type ResponseError = {
-  id: number;
-  jsonrpc: string;
-  error: { code: string; message: string };
-};
-
 /** The type of {@link Webhook}. */
 export enum WebhookType {
   MINED_TRANSACTION = "MINED_TRANSACTION",
@@ -164,4 +114,81 @@ export type Webhook = {
   version: string;
   /** Signing key for given webhook. */
   signingKey: string;
+};
+
+export interface PortfolioAddress {
+  /** Array of network identifiers (e.g., eth-mainnet). */
+  networks: Network[];
+
+  /** Wallet address. */
+  address: string;
+}
+
+export interface GetTokensByWalletRequest {
+  /** A list of wallet addresses to query. */
+  addresses: PortfolioAddress[];
+
+  /** If set to true, returns metadata. */
+  withMetadata: boolean;
+
+  /** If set to true, returns token prices. */
+  withPrices: boolean;
+
+  /** Whether to include each chain’s native token in the response (e.g. ETH on Ethereum). */
+  includeNativeTokens: boolean;
+
+  pageKey?: string;
+}
+
+export type GetTokensByWalletResponse = {
+  data: {
+    tokens: [
+      {
+        /** The blockchain network (e.g., Ethereum, Polygon) where the token is located. */
+        network: string;
+        /** The wallet address for which the token data applies. */
+        address: string;
+        /** Token address. */
+        tokenAddress: string | null;
+        /** Balance of that particular token. */
+        tokenBalance: string;
+        /** Optional metadata about the token, potentially including name, symbol, decimals, etc. */
+        tokenMetadata?: {
+          /**
+           * The token's name. Is `null` if the name is not defined in the contract and
+           * not available from other sources.
+           */
+          name: string | null;
+          /**
+           * The token's symbol. Is `null` if the symbol is not defined in the contract
+           * and not available from other sources.
+           */
+          symbol: string | null;
+          /**
+           * The number of decimals of the token. Returns `null` if not defined in the
+           * contract and not available from other sources.
+           */
+          decimals: number | null;
+          /** URL link to the token's logo. Is `null` if the logo is not available. */
+          logo: string | null;
+        };
+        /** Optional pricing data for the token, such as current value or historical prices. */
+        tokenPrices?: [
+          {
+            /** The currency the price is denominated in (e.g. 'usd'). */
+            currency: string;
+            /** The price value as a string to preserve precision. */
+            value: string;
+            /** ISO timestamp of when the price was last updated. */
+            lastUpdatedAt: string;
+          }
+        ];
+      }
+    ];
+    /** A string used for pagination to retrieve additional results if available. */
+    pageKey: string;
+  };
+};
+export type AlchemyError = {
+  error: { message: string };
 };

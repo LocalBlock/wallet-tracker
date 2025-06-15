@@ -16,7 +16,7 @@ export type BeefyAPIError = {
 export async function POST(request: NextRequest) {
   const allTokens = (await request.json()) as Awaited<
     ReturnType<typeof fetchTokensBalance>
-  >;
+  >[number]["tokens"];
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
   if (!session.isLoggedIn) {
     return NextResponse.json<Error>(

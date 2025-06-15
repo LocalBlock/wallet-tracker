@@ -10,9 +10,9 @@ import { PricesAPIResult } from "@/app/api/prices/route";
  * @param address The Ethereum address to fetch the balance for.
  * @returns A promise resolving with the Balance API result.
  */
-export async function fetchBalance(address: string) {
-  console.log("[Fetch] Balance");
-  const response = await fetch(`api/balance?address=${address}`, {
+export async function fetchBalance(addresses: string[]) {
+  console.log(`[Fetch] Balance : ${addresses.join(",")}`);
+  const response = await fetch(`api/balance?addresses=${addresses.join(",")}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -31,7 +31,7 @@ export async function fetchBalance(address: string) {
  * @returns A promise resolving with the Aave API result.
  */
 export async function fetchAaveBalance(address: string) {
-  console.log("[Fetch] Aave");
+  console.log(`[Fetch] Aave Balance : ${address}`	);
   const response = await fetch(`api/aave?address=${address}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
@@ -53,9 +53,9 @@ export async function fetchAaveBalance(address: string) {
  * @returns A promise resolving with the Beefy API result.
  */
 export async function fetchBeefyVaults(
-  allFetchedTokens: Awaited<ReturnType<typeof fetchTokensBalance>>
+  allFetchedTokens: (Awaited<ReturnType<typeof fetchTokensBalance>>)[number]["tokens"]
 ) {
-  console.log("[Fetch] Beefy vault");
+  console.log(`[Fetch] Beefy vault`);
   const response = await fetch(`api/beefy`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

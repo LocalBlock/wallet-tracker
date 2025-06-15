@@ -123,17 +123,3 @@ export async function updateCoinData({
 export async function getCoinsData() {
   return await db.coinData.findMany();
 }
-
-export async function getContractData() {
-  return await db.contractData.findMany();
-}
-
-export async function createContractData(data: {
-  chainId: string;
-  address: string;
-  decimals: number | null;
-  name: string | null;
-  symbol: string | null;
-}) {
-  await db.contractData.create({ data });
-}
