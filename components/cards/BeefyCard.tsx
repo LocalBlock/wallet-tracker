@@ -26,7 +26,7 @@ type Props = {
 };
 
 function getVaultImage(tokens: Props["data"][number]["tokens"]) {
-  let image: JSX.Element = <></>;
+  let image= <></>;
   if (tokens.length === 1) {
     image = (
       <Image src={tokens[0].image} alt={tokens[0].name} boxSize={"50px"} />
