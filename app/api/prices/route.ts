@@ -11,7 +11,7 @@ export type PricesAPIResult = {
 
 export async function POST(request: NextRequest) {
   const coinIds = (await request.json()) as string[];
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   if (!session.isLoggedIn) {
     return NextResponse.json<Error>(
       {
@@ -33,11 +33,14 @@ export async function POST(request: NextRequest) {
       dataMarket: newDataMarket,
       dataPrice: newDataPrice,
     });
-  } catch (error: any) {
-    console.log(error.message);
-    return NextResponse.json<Error>(
-      { name: "Prices fetch error", message: error.message },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    if (error instanceof Error){
+
+      console.log(error.message);
+      return NextResponse.json<Error>(
+        { name: "Prices fetch error", message: error.message },
+        { status: 500 }
+      );
+    }
   }
 }

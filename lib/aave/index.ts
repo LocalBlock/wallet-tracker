@@ -83,17 +83,19 @@ export async function fetchAaveSafetyModule(address: string) {
     };
 
     return result;
-  } catch (error: any) {
-    if (error.name === "Error") {
-      //Standard Error
-      const errorStd = error as Error;
-      console.error(errorStd.message);
-    } else {
-      // Viem Error
-      const errorViem = error as ReadContractErrorType;
-      console.error(errorViem.shortMessage);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (error.name === "Error") {
+        //Standard Error
+        const errorStd = error as Error;
+        console.error(errorStd.message);
+      } else {
+        // Viem Error
+        const errorViem = error as ReadContractErrorType;
+        console.error(errorViem.shortMessage);
+      }
     }
-    throw new Error(error);
+    throw new Error("Unexpected error");
   }
 }
 
@@ -226,19 +228,21 @@ export async function fetchAavePools(address: string) {
       }
       console.groupEnd();
     }
-  } catch (error: any) {
-    if (error.name === "Error") {
-      //Standard Error
-      const errorStd = error as Error;
-      console.error(errorStd.message);
-    } else {
-      // Viem Error
-      const errorViem = error as ReadContractErrorType;
-      console.error(errorViem.shortMessage);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (error.name === "Error") {
+        //Standard Error
+        const errorStd = error as Error;
+        console.error(errorStd.message);
+      } else {
+        // Viem Error
+        const errorViem = error as ReadContractErrorType;
+        console.error(errorViem.shortMessage);
+      }
+      console.groupEnd();
+      console.groupEnd();
     }
-    console.groupEnd();
-    console.groupEnd();
-    throw new Error(error);
+    throw new Error("Unexpected Error");
   }
   return result;
 }

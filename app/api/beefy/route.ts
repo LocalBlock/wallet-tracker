@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   const allTokens = (await request.json()) as Awaited<
     ReturnType<typeof fetchTokensBalance>
   >[number]["tokens"];
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   if (!session.isLoggedIn) {
     return NextResponse.json<Error>(
       {
@@ -158,12 +158,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json<BeefyAPIResult>({
       beefyUserVaults,
     });
-  } catch (error: any) {
-    return NextResponse.json<BeefyAPIError>(
-      {
-        message: error.message,
-      },
-      { status: error.status }
-    );
+  } catch (error: unknown) {
+    if (error instanceof Error){
+      return NextResponse.json<BeefyAPIError>(
+        {
+          message: error.message,
+        },
+        { status: 500 }
+      );
+
+    }
   }
 }

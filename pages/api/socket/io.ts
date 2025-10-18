@@ -23,7 +23,7 @@ export default function socketHandler(
     console.log("[Socket Server] is already running");
   } else {
     console.log("[Socket Server] is initializing");
-    const httpServer: HttpServer = res.socket.server as any;
+    const httpServer: HttpServer = res.socket.server as never;
     const io = new SocketServer(httpServer, { path: "/api/socket/io" });
     res.socket.server.io = io;
 

@@ -234,14 +234,16 @@ export default function AddWallet({ currentAddressWallet }: Props) {
             dataMarket,
             dataPrice,
           });
-        } catch (error: any) {
-          console.error("AddWallet error", error.message);
-          toast({
-            title: error.name,
-            description: error.message,
-            status: "error",
-            position: "top",
-          });
+        } catch (error: unknown) {
+          if (error instanceof Error){
+            console.error("AddWallet error", error.message);
+            toast({
+              title: error.name,
+              description: error.message,
+              status: "error",
+              position: "top",
+            });
+          }
           removeWallet({ walletId: walletAddress, type: "AddressWallet" });
         }
         // Reset states

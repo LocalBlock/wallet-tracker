@@ -15,7 +15,7 @@ export async function addAddressWallet({
   address: string;
   ens: string | null;
 }) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   // Address wallet already exist in db
   const existingWalletAddress = await db.addressWallet.findUnique({
@@ -56,7 +56,7 @@ export async function addAddressWallet({
 }
 
 export async function addCustomWallet(name: string) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   const addressWalletCount = await db.addressWallet.count({
     where: { address: session.address },
   });
@@ -92,7 +92,7 @@ export async function removeWallet({
   walletId: string;
   type: WalletType;
 }) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   // Get current data
   const currentUser = (await db.user.findUnique({
@@ -284,7 +284,7 @@ export async function updateCustomWallet({
   walletId: string;
   coins: CustomWallet["coins"];
 }) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   return await db.user.update({
     where: { address: session.address },
     data: {
@@ -300,7 +300,7 @@ export async function updateCustomWallet({
 }
 
 export async function updateSelectedWallet(selectedWalletId: string) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   return await db.user.update({
     where: { address: session.address },

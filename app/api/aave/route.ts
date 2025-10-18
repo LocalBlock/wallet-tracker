@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const address = searchParams.get("address");
 
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(
+    await cookies(),
+    sessionOptions
+  );
   if (!session.isLoggedIn) {
     return NextResponse.json<Error>(
       {
@@ -49,12 +52,17 @@ export async function GET(request: NextRequest) {
       safetyModule,
       aavePools,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.groupEnd();
     console.groupEnd();
-    return NextResponse.json<Error>(
-      { name: "Aave fetch error", message: error.message, cause: error.cause },
-      { status: 500 }
-    );
+    if (error instanceof Error)
+      return NextResponse.json<Error>(
+        {
+          name: "Aave fetch error",
+          message: error.message,
+          cause: error.cause,
+        },
+        { status: 500 }
+      );
   }
 }

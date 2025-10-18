@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const addresses = searchParams.get("addresses");
 
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   if (!session.isLoggedIn) {
     return NextResponse.json<Error>(
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     const tokens = await fetchTokensBalance(addresses.split(","));
     console.groupEnd();
     return NextResponse.json(tokens);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const alchemyError = error as Error;
 
     return NextResponse.json<Error>(

@@ -42,7 +42,7 @@ export default async function RootLayout({
 
   const initialState = cookieToInitialState(
     getConfig(wcProjectId),
-    headers().get("cookie")
+    (await headers()).get("cookie")
   );
 
   return (

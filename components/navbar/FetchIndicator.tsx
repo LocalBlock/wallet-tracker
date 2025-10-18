@@ -81,7 +81,9 @@ export default function FetchIndicator() {
     let errorMessage: string | undefined = undefined;
 
     // AddressWallets
-    let allBalanceFetched: Awaited<ReturnType<typeof fetchBalance>> | undefined = undefined;
+    let allBalanceFetched:
+      | Awaited<ReturnType<typeof fetchBalance>>
+      | undefined = undefined;
     for await (const addressWallet of user.addressWallets) {
       if (
         isExpired(addressWallet.lastfetch, appSettings.fetchDelayBalance) ||
@@ -93,8 +95,11 @@ export default function FetchIndicator() {
           const addressToFetch = user.addressWallets.map((ad) => ad.address);
           allBalanceFetched = await fetchBalance(addressToFetch);
         }
-        const balance=allBalanceFetched.find((a) => a.address === addressWallet.address)
-        if (!balance) throw new Error(`No balance found for ${addressWallet.address}`);
+        const balance = allBalanceFetched.find(
+          (a) => a.address === addressWallet.address
+        );
+        if (!balance)
+          throw new Error(`No balance found for ${addressWallet.address}`);
 
         // AAVE
         let safetyModule:
@@ -107,10 +112,10 @@ export default function FetchIndicator() {
           ({ safetyModule, aavePools } = await fetchAaveBalance(
             addressWallet.address
           ));
-        } catch (error: any) {
+        } catch (error: unknown) {
           safetyModule = undefined;
           aavePools = undefined;
-          errorMessage = error.message;
+          if (error instanceof Error) errorMessage = error.message;
         }
 
         // BEEFY
@@ -120,8 +125,9 @@ export default function FetchIndicator() {
           | undefined;
         try {
           beefyUserVaults = await fetchBeefyVaults(balance.tokens);
-        } catch (error: any) {
-          errorMessage = errorMessage + "\n" + error.message;
+        } catch (error: unknown) {
+          if (error instanceof Error)
+            errorMessage = errorMessage + "\n" + error.message;
         }
 
         // Final Step
@@ -219,7 +225,7 @@ export default function FetchIndicator() {
 
   // Manage Status Display
   let color = "grey";
-  let tooltipLabel: JSX.Element = <Text>Last fetch : Unknow</Text>;
+  let tooltipLabel = <Text>Last fetch : Unknow</Text>;
   if (fetchStatus === "idle") {
     if (status === "error") {
       color = "red";

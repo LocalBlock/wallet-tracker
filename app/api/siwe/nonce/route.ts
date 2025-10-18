@@ -4,7 +4,7 @@ import { SessionData, sessionOptions } from "@/app/session";
 import { generateSiweNonce } from "viem/siwe";
 
 export async function GET() {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   // Generate Nonce
   session.nonce = generateSiweNonce();
   // Save in session

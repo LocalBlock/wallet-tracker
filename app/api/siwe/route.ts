@@ -9,7 +9,7 @@ import { mainnet } from "viem/chains";
 
 // login
 export async function POST(request: NextRequest) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   const { message, signature } = (await request.json()) as {
     message: string;
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
 // read session
 export async function GET() {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   if (session.isLoggedIn !== true) {
     return Response.json(defaultSession);
@@ -73,7 +73,7 @@ export async function GET() {
 
 // logout
 export async function DELETE() {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   session.destroy();
 

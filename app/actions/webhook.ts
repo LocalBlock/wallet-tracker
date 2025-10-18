@@ -20,7 +20,7 @@ export async function updateWebhookStatus({
   webhookIds: string[];
   isActive: boolean;
 }) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   // Alchemy side
   for await (const webhookId of webhookIds) {
@@ -60,7 +60,7 @@ export type UpdatePayload = {
 };
 
 export async function updateWebhooks(payload: UpdatePayload) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   const createdWebhooks: Webhook[] = [];
   const deletedWebhookIds: string[] = [];
@@ -76,7 +76,7 @@ export async function updateWebhooks(payload: UpdatePayload) {
       // http://localhost can't be use ! error 400
       const webhookUrl =
         (process.env.NODE_ENV === "production"
-          ? headers().get("origin")
+          ? (await headers()).get("origin")
           : "https://localtest.ioulos.com") + "/api/alchemyHook";
 
       const result = await createWebhook(
