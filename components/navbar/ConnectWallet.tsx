@@ -1,4 +1,4 @@
-import { useAccount, useDisconnect } from "wagmi";
+import { useConnection, useDisconnect } from "wagmi";
 import { WalletOptions } from "@/components/navbar/WalletOptions";
 import {
   Button,
@@ -20,8 +20,8 @@ import { useState } from "react";
 
 export default function ConnectWallet() {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { isConnected, address, chainId } = useAccount();
-  const { disconnect } = useDisconnect();
+  const { isConnected, address, chainId } = useConnection();
+  const disconnect = useDisconnect();
   const [signInError, setSignInError] = useState({
     isError: false,
     title: "",
@@ -40,7 +40,7 @@ export default function ConnectWallet() {
         trapFocus={false}
       >
         <ModalOverlay />
-        <ModalContent >
+        <ModalContent>
           <ModalBody>
             <VStack>
               {signInError.isError && (
@@ -54,7 +54,10 @@ export default function ConnectWallet() {
               {isConnected && (
                 <>
                   <Text>Connected Wallet : {displayName(address!, null)} </Text>
-                  <Button onClick={() => disconnect()} variant={"outline"}>
+                  <Button
+                    onClick={() => disconnect.mutate()}
+                    variant={"outline"}
+                  >
                     Disconnect wallet
                   </Button>
                   <SignInButton

@@ -5,11 +5,12 @@ import {
   Button,
   Heading,
 } from "@chakra-ui/react";
-import { useConnect } from "wagmi";
+import { useConnect, useConnectors } from "wagmi";
 import { Image } from "@chakra-ui/react";
 
 export function WalletOptions() {
-  const { connectors, connect, isPending, isError, failureReason } = useConnect();
+  const connect = useConnect();
+  const connectors = useConnectors();
 
   return (
     <>
@@ -17,23 +18,23 @@ export function WalletOptions() {
         Select a wallet type :
       </Heading>
       {/* Alert message */}
-      {isError && (
+      {connect.isError && (
         <Alert
           status={
-            failureReason?.name === "UserRejectedRequestError"
+            connect.failureReason?.name === "UserRejectedRequestError"
               ? "warning"
               : "error"
           }
         >
           <AlertIcon />
-          <AlertDescription>{failureReason?.name}</AlertDescription>
+          <AlertDescription>{connect.failureReason?.name}</AlertDescription>
         </Alert>
       )}
       {connectors.map((connector) => (
         <Button
           key={connector.uid}
-          isLoading={isPending}
-          onClick={() => connect({ connector })}
+          isLoading={connect.isPending}
+          onClick={() => connect.mutate({ connector })}
         >
           {connector.icon && (
             <Image src={connector.icon} boxSize={"25px"} alt={connector.name} />
