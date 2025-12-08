@@ -55,3 +55,13 @@ export const stakeAssetNameFormatted = (stakeAssetName: Stake) => {
       return "ABPT V2";
   }
 };
+
+/**
+ * Stake Tokens from AaveSafetyModule
+ */
+export const stkTokenContractAddresses = [
+  AaveSafetyModule.STK_AAVE.toLowerCase(),
+  AaveSafetyModule.STK_ABPT.toLowerCase(),
+  AaveSafetyModule.STK_GHO.toLowerCase(),
+  AaveSafetyModule.STK_AAVE_WSTETH_BPTV2.toLowerCase(),
+];

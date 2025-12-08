@@ -5,6 +5,7 @@ import { formatEther, formatUnits } from "viem";
 import { getTokensByWallet } from "./portfolio";
 import { BalanceAPIResult } from "@/app/api/balance/route";
 import { GetTokensByWalletRequest } from "./types";
+import { stkTokenContractAddresses } from "../aave/stakeConfig";
 
 /**
  * Fetch tokens and native tokens on alchemy
@@ -70,7 +71,8 @@ export async function fetchTokensBalance(addresses: string[]) {
       if (
         rawToken.tokenMetadata && // with metadata
         rawToken.tokenMetadata.decimals && // and decimals
-        !aTokenContractAddresses.includes(rawToken.tokenAddress) // and not a aave token
+        !aTokenContractAddresses.includes(rawToken.tokenAddress) && // and not a aave token
+        !stkTokenContractAddresses.includes(rawToken.tokenAddress) // and not stake token
       ) {
         const findCoingecko = coinlist.find(
           (coin) => coin.platforms[chain.id] === rawToken.tokenAddress
