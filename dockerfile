@@ -89,7 +89,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 # CMD ["node", "server.js"]
 
 # Add prisma cli to execute prisma migrate deploy
-RUN yarn global add prisma
+RUN yarn global add prisma@6
 
 # Fix Error: connect ECONNREFUSED 127.0.0.1:3000 with fetch in server action
 ENV HOSTNAME=0.0.0.0
