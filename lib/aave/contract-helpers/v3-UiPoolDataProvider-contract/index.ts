@@ -152,7 +152,6 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
       (reserveRaw, index) => {
         const virtualUnderlyingBalance =
           reserveRaw.virtualUnderlyingBalance.toString();
-        const { virtualAccActive } = reserveRaw;
         return {
           originalId: index,
           id: `${this.chainId}-${reserveRaw.underlyingAsset}-${lendingPoolAddressProvider}`.toLowerCase(),
@@ -199,13 +198,12 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
           supplyCap: reserveRaw.supplyCap.toString(),
           borrowableInIsolation: reserveRaw.borrowableInIsolation,
           accruedToTreasury: reserveRaw.accruedToTreasury.toString(),
-          unbacked: reserveRaw.unbacked.toString(),
           isolationModeTotalDebt: reserveRaw.isolationModeTotalDebt.toString(),
           debtCeilingDecimals: Number(reserveRaw.debtCeilingDecimals),
           isSiloedBorrowing: reserveRaw.isSiloedBorrowing,
           flashLoanEnabled: reserveRaw.flashLoanEnabled,
-          virtualAccActive,
           virtualUnderlyingBalance,
+          deficit: reserveRaw.deficit.toString(),
         };
       }
     );
@@ -289,6 +287,9 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
         borrowableBitmap: eMode.eMode.borrowableBitmap
           .toString(2)
           .padStart(256, "0"),
+        ltvzeroBitmap: eMode.eMode.ltvzeroBitmap
+          .toString(2)
+          .padStart(256, '0'),
       },
     }));
   }

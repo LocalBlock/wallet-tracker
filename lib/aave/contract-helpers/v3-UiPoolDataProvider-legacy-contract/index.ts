@@ -220,6 +220,7 @@ export class LegacyUiPoolDataProvider
         flashLoanEnabled: reserveRaw.flashLoanEnabled,
         virtualAccActive: false,
         virtualUnderlyingBalance: "0",
+        deficit: "0"
       })
     );
 
