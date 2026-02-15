@@ -39,7 +39,7 @@ export default function About() {
               <b>Supported Chains :</b> Ethereum, Polygon.
             </ListItem>
             <ListItem>
-              <b>Supported Defi Protocols :</b> Aave V2/V3, Beefy.
+              <b>Supported Defi Protocols :</b> Aave V3.
             </ListItem>
           </UnorderedList>
         </Box>

@@ -1,7 +1,5 @@
-import { fetchTokensBalance } from "./alchemy";
 import { BalanceAPIResult } from "@/app/api/balance/route";
 import { AaveAPIResult } from "@/app/api/aave/route";
-import { BeefyAPIResult } from "@/app/api/beefy/route";
 import { PricesAPIResult } from "@/app/api/prices/route";
 
 /**
@@ -42,44 +40,6 @@ export async function fetchAaveBalance(address: string) {
     throw new Error(err.message, { cause: err.cause });
   }
   return (await response.json()) as AaveAPIResult;
-}
-
-/**
- * Fetches beefy vaults from fetched tokens.
- *
- * Mutate allFetchedTokens param to remove beefy tokens.
- *
- * @param allFetchedTokens All user Tokens for identify user vaults.
- * @returns A promise resolving with the Beefy API result.
- */
-export async function fetchBeefyVaults(
-  allFetchedTokens: (Awaited<ReturnType<typeof fetchTokensBalance>>)[number]["tokens"]
-) {
-  console.log(`[Fetch] Beefy vault`);
-  const response = await fetch(`api/beefy`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(allFetchedTokens),
-  });
-  if (!response.ok) {
-    const err = (await response.json()) as Error;
-    if (err.cause) console.error(err.cause);
-    throw new Error(err.name + " : " + err.message);
-  }
-
-  const { beefyUserVaults } = (await response.json()) as BeefyAPIResult;
-
-  // Filter allFetchedTokens, to remove detected beefytoken
-  const allFetchedTokenWithouBeefy = allFetchedTokens.filter((token) =>
-    beefyUserVaults.some(
-      (vault) =>
-        vault.earnContractAddress.toLowerCase() != token.contractAddress
-    )
-  );
-  // Mutate allFetchedTokens
-  allFetchedTokens = allFetchedTokenWithouBeefy;
-
-  return beefyUserVaults;
 }
 
 /**

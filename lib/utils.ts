@@ -131,7 +131,8 @@ export function getAllIds(addressWallet: AddressWallet) {
   // Tokens
   addressWallet.tokens.forEach((token) => allIds.push(token.coinDataId));
 
-  //Add defiToken Id
+  // Add defiToken Id
+
   // Safetymodule
   if (addressWallet.defi.aaveSafetyModule.aave.stakeTokenUserBalance != "0")
     allIds.push(addressWallet.defi.aaveSafetyModule.aave.coinDataId);
@@ -139,6 +140,7 @@ export function getAllIds(addressWallet: AddressWallet) {
     allIds.push(addressWallet.defi.aaveSafetyModule.bpt.coinDataId);
   if (addressWallet.defi.aaveSafetyModule.gho.stakeTokenUserBalance != "0")
     allIds.push(addressWallet.defi.aaveSafetyModule.gho.coinDataId);
+
   // Aave pools
   for (const chain of appSettings.chains) {
     for (const userReserveData of addressWallet.defi.aaveV3[chain.id]
@@ -146,12 +148,6 @@ export function getAllIds(addressWallet: AddressWallet) {
       allIds.push(userReserveData.coinDataId);
     }
   }
-  // Beefy
-  addressWallet.defi.beefy.forEach((vault) => {
-    vault.tokens.forEach((token) => allIds.push(token.id));
-  });
-  // Add USDC coin if there is beefy data
-  if (addressWallet.defi.beefy.length != 0) allIds.push("usd-coin");
 
   // Remove duplicate
   return Array.from(new Set(allIds));

@@ -8,7 +8,6 @@ import {
 import {
   fetchAaveBalance,
   fetchBalance,
-  fetchBeefyVaults,
   fetchPrices,
 } from "@/lib/fetchFunctions";
 import { getAllIds } from "@/lib/utils";
@@ -185,9 +184,6 @@ export default function AddWallet({ currentAddressWallet }: Props) {
             walletAddress
           );
 
-          setIsLoadingText("Fetching Beefy");
-          const beefyUserVaults = await fetchBeefyVaults(balance.tokens);
-
           // Final Step
           // Split tokens into 2 new array, identified/unidentified
           const identifiedTokens = [];
@@ -217,7 +213,6 @@ export default function AddWallet({ currentAddressWallet }: Props) {
             defi: {
               aaveSafetyModule: safetyModule,
               aaveV3: aavePools.aaveV3,
-              beefy: beefyUserVaults,
             },
           });
 

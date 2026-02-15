@@ -56,8 +56,5 @@ export const appSettings = {
     aave: {
       image: "aave.svg",
     },
-    beefy: {
-      image: "beefy.svg",
-    },
   },
 } as const;

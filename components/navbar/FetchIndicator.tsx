@@ -10,7 +10,6 @@ import { FaCircle } from "react-icons/fa6";
 import {
   fetchAaveBalance,
   fetchBalance,
-  fetchBeefyVaults,
   fetchPrices,
 } from "@/lib/fetchFunctions";
 
@@ -118,18 +117,6 @@ export default function FetchIndicator() {
           if (error instanceof Error) errorMessage = error.message;
         }
 
-        // BEEFY
-        // Get beeyVaults and mutate tokens
-        let beefyUserVaults:
-          | Awaited<ReturnType<typeof fetchBeefyVaults>>
-          | undefined;
-        try {
-          beefyUserVaults = await fetchBeefyVaults(balance.tokens);
-        } catch (error: unknown) {
-          if (error instanceof Error)
-            errorMessage = errorMessage + "\n" + error.message;
-        }
-
         // Final Step
         // Split tokens into 2 new array, identified/unidentified
         const identifiedTokens = [];
@@ -160,7 +147,6 @@ export default function FetchIndicator() {
             aaveSafetyModule:
               safetyModule ?? addressWallet.defi.aaveSafetyModule, // if Aave fetch fail, keep old data
             aaveV3: aavePools?.aaveV3 ?? addressWallet.defi.aaveV3, // if Aave fetch fail, keep old data
-            beefy: beefyUserVaults ?? addressWallet.defi.beefy, // if beefy fetch fail, keep old data
           },
         });
 

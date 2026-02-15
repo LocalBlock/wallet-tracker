@@ -40,7 +40,6 @@ declare global {
     type Defi = {
       aaveSafetyModule: AaveSafetyModule;
       aaveV3: { [Property in ChainId]: AaveBalance };
-      beefy: BeefyBalance[];
     };
     type List = FetchCoinList;
     type AssetNotifications = {
@@ -172,66 +171,6 @@ export type AaveBalance = {
       aTokenAddress: string;
     };
   }[];
-};
-
-/** Beefy vault API
- * https://github.com/beefyfinance/beefy-api/blob/master/src/api/vaults/types.ts
- */
-export type BeefyVault = {
-  id: string;
-  name: string;
-  type: "standard" | "gov";
-  token: string;
-  tokenAddress?: string | null;
-  tokenDecimals: number;
-  tokenProviderId?: string;
-  tokenAmmId?: string;
-  earnedToken: string;
-  earnedTokenAddress: string;
-  earnedTokenDecimals?: number;
-  earnContractAddress: string;
-  oracle: "lps" | "tokens";
-  oracleId: string;
-  status: "active" | "paused" | "eol";
-  platformId: string;
-  assets?: string[];
-  strategyTypeId: string;
-  risks: string[];
-  addLiquidityUrl?: string;
-  removeLiquidityUrl?: string;
-  network: string;
-  strategy: string;
-  lastHarvest?: number;
-  pricePerFullShare: string;
-  createdAt: number;
-  chain: string;
-};
-
-export type BeefyApy = { [vaultId: string]: number };
-
-export type BeefyLps = {
-  [vaultId: string]: {
-    price: number;
-    tokens: string[];
-    balances: string[];
-    totalSupply: string;
-  };
-};
-
-export type BeefyBalance = {
-  id: string;
-  name: string;
-  chain: string;
-  currentBalance: string;
-  currentBalanceHarvest: string;
-  earnContractAddress: string;
-  pricePerFullShare: string;
-  lpsPrice: number;
-  tokens: {
-    id: string;
-    contract: string;
-  }[];
-  apy: number;
 };
 
 export type IncomingNotifications = {

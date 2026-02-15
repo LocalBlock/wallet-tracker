@@ -1,7 +1,6 @@
 import { getUserDefi } from "@/lib/assets";
 import AaveCard from "./cards/AaveCard";
 import AaveSafetyModuleCard from "./cards/AaveSafetyModuleCard";
-import BeefyCard from "./cards/BeefyCard";
 
 type Props = {
   userDefi: ReturnType<typeof getUserDefi>;
@@ -25,13 +24,6 @@ export default function Defi({ userDefi, selectedChains, currency }: Props) {
           currency={currency}
           selectedChains={selectedChains}
           data={userDefi.aaveV3}
-        />
-      )}
-      {userDefi.beefy.length != 0 && (
-        <BeefyCard
-          currency={currency}
-          selectedChains={selectedChains}
-          data={userDefi.beefy}
         />
       )}
     </>

@@ -83,19 +83,6 @@ export default function ChartBalance({
       });
     });
 
-  userDefi?.beefy
-    .filter((bf) => selectedChains.includes(bf.chain))
-    .forEach((vault) => {
-      defiTokens.push({
-        balance: vault.currentBalanceHarvest,
-        balanceCurrency:
-          Number(vault.currentBalanceHarvest) * vault.price[selectedCurrency],
-        balanceCurrencyChange:
-          (vault.price[currency24hChangePropName] ?? 0) / 100,
-        sparkline: vault.sparkline_in_7d,
-      });
-    });
-
   // Merge all and remove if no sparklinedata
   const allAsset = [...tokens, ...defiTokens].filter(
     (element) => element.sparkline.price.length != 0

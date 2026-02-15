@@ -1,7 +1,7 @@
 import { AddressWallet, CoinData, CustomWallet } from "@prisma/client";
 import { stakeConfig } from "./aave/stakeConfig";
 import { formatUnits } from "viem";
-import { AaveBalance, BeefyBalance, ChainId } from "@/types";
+import { AaveBalance, ChainId } from "@/types";
 /**
  * Merge tokens/coins asset between wallets (addressWallet/customWallet) and add coins Data (prices)
  * @param selectedAddressWallets Selected address wallets array
@@ -120,7 +120,6 @@ export function getUserDefi(
     return {
       aaveSafetymodule: [],
       aaveV3: [],
-      beefy: [],
     };
 
   // AAVE SAFETY MODULE
@@ -247,89 +246,8 @@ export function getUserDefi(
     selectedAddressWallets.map((aw) => aw.defi.aaveV3)
   );
 
-  // BEEFY
-  type TokenWithData = BeefyBalance["tokens"][number] & {
-    image: string;
-    name: string;
-  };
-
-  const mergedBeefyVaults = selectedAddressWallets
-    .map((aw) => aw.defi.beefy)
-    .flat()
-    .reduce((acc, currentValue) => {
-      const index = acc.findIndex((v) => v.id === currentValue.id);
-      if (index != -1) {
-        //merge
-        acc[index].currentBalance = (
-          Number(acc[index].currentBalance) +
-          Number(currentValue.currentBalance)
-        ).toString();
-        acc[index].currentBalanceHarvest = (
-          Number(acc[index].currentBalanceHarvest) +
-          Number(currentValue.currentBalanceHarvest)
-        ).toString();
-      } else {
-        acc.push(currentValue);
-      }
-
-      return [...acc];
-    }, [] as BeefyBalance[])
-    .map((vault) => {
-      // Warning to confirm !!!!!!
-      // if price = 0, it is a vault with single token
-      // Update price whith the first token?
-      if (vault.lpsPrice === 0) {
-        const coinData = coinsData.find((cd) => cd.id === vault.tokens[0].id)!;
-        const tokenWithData: TokenWithData = {
-          ...vault.tokens[0],
-          image: coinData.image,
-          name: coinData.name,
-        };
-        return {
-          ...vault,
-          price: coinData.price,
-          sparkline_in_7d: coinData.sparkline_in_7d,
-          tokens: [tokenWithData],
-        };
-      } else {
-        //bordel! we build a  special price object because there is no coingecko price with with lp vault
-        // of course no 24h change avalaible
-        //take price from usd-coin and convert
-        // USDC Coin must exist
-        const usdCoinData = coinsData.find((cd) => cd.id === "usd-coin")!;
-        const price = {
-          usd: vault.lpsPrice,
-          usd_24h_change: 0,
-          eur: vault.lpsPrice / usdCoinData.price["eur"],
-          eur_24h_change: 0,
-          btc: vault.lpsPrice / usdCoinData.price["btc"],
-          btc_24h_change: 0,
-        };
-        // Make a custom sparkline with vault price, constant price
-        const sparkline_in_7d = { price: new Array(168).fill(vault.lpsPrice) };
-
-        // add image for each token in vault
-        const tokensWithdata = vault.tokens.map((token) => {
-          const coinData = coinsData.find((cd) => cd.id === token.id)!;
-          return {
-            ...token,
-            image: coinData.image,
-            name: coinData.name,
-          };
-        });
-
-        return {
-          ...vault,
-          price,
-          sparkline_in_7d,
-          tokens: tokensWithdata,
-        };
-      }
-    });
-
   return {
     aaveSafetymodule: mergedSafetyModuleArray,
     aaveV3: mergedAavePoolsV3Array,
-    beefy: mergedBeefyVaults,
   };
 }
