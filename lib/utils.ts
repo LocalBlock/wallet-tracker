@@ -141,10 +141,6 @@ export function getAllIds(addressWallet: AddressWallet) {
     allIds.push(addressWallet.defi.aaveSafetyModule.gho.coinDataId);
   // Aave pools
   for (const chain of appSettings.chains) {
-    for (const userReserveData of addressWallet.defi.aaveV2[chain.id]
-      .userReservesData) {
-      allIds.push(userReserveData.coinDataId);
-    }
     for (const userReserveData of addressWallet.defi.aaveV3[chain.id]
       .userReservesData) {
       allIds.push(userReserveData.coinDataId);

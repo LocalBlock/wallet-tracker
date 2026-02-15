@@ -23,9 +23,7 @@ type Props = {
   version: string;
   currency: string;
   selectedChains: string[];
-  data:
-    | Awaited<ReturnType<typeof getUserDefi>>["aaveV2"]
-    | Awaited<ReturnType<typeof getUserDefi>>["aaveV3"];
+  data: Awaited<ReturnType<typeof getUserDefi>>["aaveV3"];
 };
 
 export default function AaveCard({

@@ -29,10 +29,10 @@ export default function FetchIndicator() {
   const [lastFetchBalance, setLastFetchBalance] = useState<Date | undefined>(
     user?.addressWallets.length != 0
       ? user?.addressWallets[0].lastfetch
-      : undefined
+      : undefined,
   );
   const [lastFetchPrice, setLastFetchPrice] = useState<Date>(
-    new Date(dataUpdatedAt)
+    new Date(dataUpdatedAt),
   );
 
   // Fetcher
@@ -96,7 +96,7 @@ export default function FetchIndicator() {
           allBalanceFetched = await fetchBalance(addressToFetch);
         }
         const balance = allBalanceFetched.find(
-          (a) => a.address === addressWallet.address
+          (a) => a.address === addressWallet.address,
         );
         if (!balance)
           throw new Error(`No balance found for ${addressWallet.address}`);
@@ -110,7 +110,7 @@ export default function FetchIndicator() {
           | undefined;
         try {
           ({ safetyModule, aavePools } = await fetchAaveBalance(
-            addressWallet.address
+            addressWallet.address,
           ));
         } catch (error: unknown) {
           safetyModule = undefined;
@@ -159,7 +159,6 @@ export default function FetchIndicator() {
           defi: {
             aaveSafetyModule:
               safetyModule ?? addressWallet.defi.aaveSafetyModule, // if Aave fetch fail, keep old data
-            aaveV2: aavePools?.aaveV2 ?? addressWallet.defi.aaveV2, // if Aave fetch fail, keep old data
             aaveV3: aavePools?.aaveV3 ?? addressWallet.defi.aaveV3, // if Aave fetch fail, keep old data
             beefy: beefyUserVaults ?? addressWallet.defi.beefy, // if beefy fetch fail, keep old data
           },

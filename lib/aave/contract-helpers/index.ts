@@ -5,7 +5,6 @@
 
 export * from './V3-uiStakeDataProvider-contract';
 export * from './v3-UiPoolDataProvider-contract';
-export * from './v3-UiPoolDataProvider-legacy-contract';
 
 // commons
 export * from './commons/types';

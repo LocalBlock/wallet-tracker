@@ -71,18 +71,6 @@ export default function ChartBalance({
       });
     });
 
-  userDefi?.aaveV2
-    .filter((ap) => selectedChains.includes(ap.chain))
-    .forEach((ap) => {
-      defiTokens.push({
-        balance: ap.underlyingBalance,
-        balanceCurrency:
-          Number(ap.underlyingBalance) * ap.price[selectedCurrency],
-        balanceCurrencyChange: (ap.price[currency24hChangePropName] ?? 0) / 100,
-        sparkline: ap.sparkline_in_7d,
-      });
-    });
-
   userDefi?.aaveV3
     .filter((ap) => selectedChains.includes(ap.chain))
     .forEach((ap) => {

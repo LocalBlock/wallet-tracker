@@ -119,7 +119,6 @@ export function getUserDefi(
   if (selectedAddressWallets.length === 0)
     return {
       aaveSafetymodule: [],
-      aaveV2: [],
       aaveV3: [],
       beefy: [],
     };
@@ -184,7 +183,7 @@ export function getUserDefi(
    * @returns
    */
   function mergeAavePoolsVersion(
-    aave: AddressWallet["defi"]["aaveV2"][] | AddressWallet["defi"]["aaveV3"][]
+    aave: AddressWallet["defi"]["aaveV3"][]
   ) {
     // Deep cloning object with Json.parse() and Json.Stringify(), to avoid mutate original object
     const aaveClone = JSON.parse(JSON.stringify(aave)) as typeof aave;
@@ -243,10 +242,6 @@ export function getUserDefi(
     });
     return finalArray;
   }
-
-  const mergedAavePoolsV2Array = mergeAavePoolsVersion(
-    selectedAddressWallets.map((aw) => aw.defi.aaveV2)
-  );
 
   const mergedAavePoolsV3Array = mergeAavePoolsVersion(
     selectedAddressWallets.map((aw) => aw.defi.aaveV3)
@@ -334,7 +329,6 @@ export function getUserDefi(
 
   return {
     aaveSafetymodule: mergedSafetyModuleArray,
-    aaveV2: mergedAavePoolsV2Array,
     aaveV3: mergedAavePoolsV3Array,
     beefy: mergedBeefyVaults,
   };

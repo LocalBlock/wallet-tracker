@@ -39,7 +39,6 @@ declare global {
     type Sparkline_in_7d = FetchCoinMarket["sparkline_in_7d"];
     type Defi = {
       aaveSafetyModule: AaveSafetyModule;
-      aaveV2: { [Property in ChainId]: AaveBalance };
       aaveV3: { [Property in ChainId]: AaveBalance };
       beefy: BeefyBalance[];
     };

@@ -16,7 +16,7 @@ A simple wallet tracker web application to display current balance and prices fr
 
 * Sign-in with Ethereum : log in with your ethereum address. Your keys, your identifier
 * Supported chains : Ethereum and Polygon.
-* Supported DeFi protocols : Aave V2/V3 and Beefy.
+* Supported DeFi protocols : Aave V3 and Beefy.
 * ENS name.
 * Custom wallet : Create a cutom wallet and add  coin/token manualy, useful if you want to track off chain assets.
 * Groups : Regroup wallet address to display the total balance of grouped wallets.

@@ -216,7 +216,6 @@ export default function AddWallet({ currentAddressWallet }: Props) {
             tokens: identifiedTokens,
             defi: {
               aaveSafetyModule: safetyModule,
-              aaveV2: aavePools.aaveV2,
               aaveV3: aavePools.aaveV3,
               beefy: beefyUserVaults,
             },

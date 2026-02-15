@@ -19,14 +19,6 @@ export default function Defi({ userDefi, selectedChains, currency }: Props) {
           selectedChains={selectedChains}
         />
       )}
-      {userDefi.aaveV2.length != 0 && (
-        <AaveCard
-          version={"V2"}
-          currency={currency}
-          selectedChains={selectedChains}
-          data={userDefi.aaveV2}
-        />
-      )}
       {userDefi.aaveV3.length != 0 && (
         <AaveCard
           version={"V3"}
