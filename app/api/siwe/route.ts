@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { getIronSession } from "iron-session";
 import { defaultSession, sessionOptions, SessionData } from "@/app/session";
 import { db } from "@/lib/db";
-import { verifySiweMessage, parseSiweMessage } from "viem/siwe";
+import { parseSiweMessage } from "viem/siwe";
 import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 
@@ -18,13 +18,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const parsedMessage = parseSiweMessage(message);
+    
+    // Create public client with Alchemy
+    const publicClient = createPublicClient({
+      chain: mainnet,
+      transport: http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_APIKEY}`), 
+    })
 
     // Verifiy SIWE Message
-    const isValid = await verifySiweMessage(
-      createPublicClient({
-        chain: mainnet,
-        transport: http(),
-      }),
+    const isValid = await publicClient.verifySiweMessage(
       {
         message,
         signature,
